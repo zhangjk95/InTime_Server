@@ -1,0 +1,6 @@
+module.exports = {
+    'saltPrefix': '<prefix>',
+    'saltSuffix': '<suffix>',
+    'tokenSecret': '<secret>',
+    'database': 'mongodb://<username>:<password>@<host>:<port>/<database>'
+};
