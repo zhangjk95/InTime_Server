@@ -1,6 +1,6 @@
 var router = require('express').Router();
 
-router.use('/user', require('./user'));
+router.use('/users', require('./users'));
 router.use('/login', require('./login'));
 
 if (__env === 'development') {

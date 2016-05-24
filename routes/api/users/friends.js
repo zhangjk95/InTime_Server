@@ -4,7 +4,7 @@ var util = require('util');
 
 var User = require(__base + 'models/user');
 
-// GET /user/:uid/friends
+// GET /users/:uid/friends
 router.get('/:uid/friends', function(req, res, next) {
     User.findOne({ _id: req.params.uid }).exec(function(err, user) {
         if (err) return next(err);
@@ -12,7 +12,7 @@ router.get('/:uid/friends', function(req, res, next) {
     });
 });
 
-// POST /user/:uid/friends/:friend_uid
+// POST /users/:uid/friends/:friend_uid
 router.post('/:uid/friends/:friend_uid', function(req, res, next) {
     User.findOne({ _id: req.params.friend_uid }, function(err, friendUser) {
         if (err) return next(err);
@@ -34,7 +34,7 @@ router.post('/:uid/friends/:friend_uid', function(req, res, next) {
                         //TODO: notify
 
                         return res.status(201)
-                            .header('location', util.format('/user/%s/friends/%s', req.params.uid, req.params.friend_uid))
+                            .header('location', util.format('/users/%s/friends/%s', req.params.uid, req.params.friend_uid))
                             .json({ status: "waiting" });
                     });
                 });
@@ -62,7 +62,7 @@ router.post('/:uid/friends/:friend_uid', function(req, res, next) {
     });
 });
 
-// DELETE /user/:uid/friends/:friend_uid
+// DELETE /users/:uid/friends/:friend_uid
 router.delete('/:uid/friends/:friend_uid', function(req, res, next) {
     User.findOne({ _id: req.params.friend_uid }, function(err, friendUser) {
         if (err) return next(err);

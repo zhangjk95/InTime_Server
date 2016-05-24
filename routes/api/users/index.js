@@ -3,7 +3,7 @@ var router = require('express').Router();
 var User = require(__base + 'models/user');
 var passwordEncrypt = require(__base + "passwordEncrypt");
 
-// POST /user
+// POST /users
 router.post('/', function(req, res, next) {
     if (req.body.username == null) {
         return res.status(400).json({ error: 'Username is empty.' });
@@ -33,7 +33,7 @@ router.post('/', function(req, res, next) {
             user.save(function(err) {
                 if (err) return next(err);
                 return res.status(201)
-                    .header("location", "/api/user/" + user._id)
+                    .header("location", "/api/users/" + user._id)
                     .json({ uid: user._id });
             });
         }
@@ -42,7 +42,7 @@ router.post('/', function(req, res, next) {
 
 router.use(require('../verifyToken'));
 
-// GET /user
+// GET /users
 router.get('/', function(req, res, next) {
     User.find({ username: {$regex: req.query.username_like, $options: 'i'} }, function(err, users) {
         if (err) return next(err);
@@ -50,7 +50,7 @@ router.get('/', function(req, res, next) {
     });
 });
 
-// GET /user/:uid
+// GET /users/:uid
 router.get('/:uid', function(req, res, next) {
     User.findOne({ _id: req.params.uid }, function(err, user) {
         if (err) return next(err);
@@ -70,7 +70,7 @@ router.get('/:uid', function(req, res, next) {
 
 router.use('/:uid', require('./verifyUserPermission'));
 
-// PUT /user/:uid
+// PUT /users/:uid
 router.put('/:uid', function(req, res, next) {
     if (req.body.username == null) {
         return res.status(400).json({ error: 'Username is empty.' });
