@@ -9,4 +9,7 @@ if (__env === 'development') {
 
 router.use(require('./verifyToken'));
 
+router.use('/orders', require('./orders'));
+router.use('/templates', require('./templates'));
+
 module.exports = router;
