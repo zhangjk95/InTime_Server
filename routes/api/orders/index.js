@@ -2,6 +2,7 @@ var router = require('express').Router();
 
 var Order = require(__base + 'models/order');
 var User = require(__base + 'models/user');
+var modifyStatus = require('./modifyStatus');
 
 // POST /orders
 router.post('/', function(req, res, next) {
@@ -56,7 +57,7 @@ router.post('/', function(req, res, next) {
 router.get('/', function(req, res, next) {
     var condition = {};
 
-    if (req.query.uid == req.user.uid || req.query.accept_user_contains == req.user.uid || req.query.status == 'waiting') {
+    if (req.query.uid == req.user.uid || req.query.accept_users_contains == req.user.uid || req.query.status == 'waiting') {
         if (req.query.uid) {
             condition['uid'] = req.query.uid;
         }
@@ -163,51 +164,109 @@ router.put('/:oid', function(req, res, next) {
         return res.status(403).json({ error: 'Permission denied.' });
     }
 
-    //TODO: modify status
+    if (req.body.status) {
+        if (req.body.status == 'cancel' && (order.status == 'waiting' || order.status == 'accepted')) {
+            if (order.type == 'offer' || order.type == 'notification' || order.type == 'request' && !order.accept_users.some((acceptUser) => acceptUser.status == 'accepted')) {
+                order.status = 'canceled';
+                order.save(function(err) {
+                    if (err) return next(err);
 
-    if (!(req.body.title && req.body.content && req.body.category && req.body.coordinate &&
-        req.body.coordinate.latitude && req.body.coordinate.longitude && req.body.isPrivate && req.body.time)) {
-        return res.status(400).json({error: 'Something is empty.'});
-    }
-    if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "notification") {
-        return res.status(400).json({ error: 'Type error.' });
-    }
-    if ((req.body.type == "request" || req.body.type == "offer") && isNaN(req.body.points)) {
-        return res.status(400).json({ error: 'Points must be an integer.' });
-    }
-    if ((req.body.type == "request" || req.body.type == "offer") && (isNaN(req.body.number) || parseInt(req.body.number) <= 0)) {
-        return res.status(400).json({ error: 'Number must be positive.' });
-    }
+                    //TODO: modify balance
 
-    order.isPrivate = req.body.isPrivate;
-    if (req.body.type == "request" || req.body.type == "offer") {
-        order.number = req.body.number;
-        //TODO: modify status
-    }
+                    return res.json({ status : 'canceled' });
+                });
+            }
+            else if (order.type == 'request') {
+                order.status = 'canceling';
+                for (var i in order.accept_users) {
+                    var acceptUser = order.accept_users[i];
+                    if (acceptUser.status == 'accepted') {
+                        acceptUser.status = 'canceling';
 
-    if (!order.accept_users.some((acceptUser) => acceptUser.status != 'canceled')) {
-        order.title = req.body.title;
-        order.content = req.body.content;
-        order.category = req.body.category;
-        order.place = req.body.place;
-        order.coordinate = {
-            latitude: req.body.coordinate.latitude,
-            longitude : req.body.coordinate.longitude
-        };
-        order.time = req.body.time;
+                        //TODO: notify
+                    }
+                }
 
-        if (req.body.type == "request" || req.body.type == "offer") {
-            order.points = req.body.points;
+                order.save(function(err) {
+                    if (err) return next(err);
+                    return res.json({ status : 'canceling' });
+                });
+            }
+        }
+        else if (req.body.status == 'completed' && order.type == 'request' && order.status == 'accepted') {
+            order.status = 'completed';
+            for (var i in order.accept_users) {
+                var acceptUser = order.accept_users[i];
+                if (acceptUser.status == 'accepted') {
+                    acceptUser.status = 'completed';
+
+                    //TODO: notify
+                }
+            }
+
+            order.save(function(err) {
+                if (err) return next(err);
+
+                //TODO: modify balance
+
+                return res.json({ status : 'completed' });
+            });
+        }
+        else {
+            return res.status(400).json({ error: 'Status error.' });
         }
     }
+    else {
+        if (!(req.body.title && req.body.content && req.body.category && req.body.coordinate &&
+            req.body.coordinate.latitude && req.body.coordinate.longitude && req.body.isPrivate && req.body.time)) {
+            return res.status(400).json({error: 'Something is empty.'});
+        }
+        if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "notification") {
+            return res.status(400).json({error: 'Type error.'});
+        }
+        if ((req.body.type == "request" || req.body.type == "offer") && isNaN(req.body.points)) {
+            return res.status(400).json({error: 'Points must be an integer.'});
+        }
+        if ((req.body.type == "request" || req.body.type == "offer") && (isNaN(req.body.number) || parseInt(req.body.number) <= 0)) {
+            return res.status(400).json({error: 'Number must be positive.'});
+        }
 
-    order.save(function(err) {
-        if (err) return next(err);
+        order.isPrivate = req.body.isPrivate;
+        if (req.body.type == "request" || req.body.type == "offer") {
+            var currentNumber = order.accept_users.filter((acceptUser) => acceptUser.status != 'canceled').length;
+            if (req.body.number < currentNumber) {
+                return res.status(400).json({error: "Number must greater or equal than number of accepted users."});
+            }
+            else {
+                order.number = req.body.number;
+                modifyStatus(order);
+            }
+        }
 
-        //TODO: modify balance
+        if (!order.accept_users.some((acceptUser) => acceptUser.status != 'canceled')) {
+            order.title = req.body.title;
+            order.content = req.body.content;
+            order.category = req.body.category;
+            order.place = req.body.place;
+            order.coordinate = {
+                latitude: req.body.coordinate.latitude,
+                longitude: req.body.coordinate.longitude
+            };
+            order.time = req.body.time;
 
-        return res.json({});
-    });
+            if (req.body.type == "request" || req.body.type == "offer") {
+                order.points = req.body.points;
+            }
+        }
+
+        order.save(function (err) {
+            if (err) return next(err);
+
+            //TODO: modify balance
+
+            return res.json({});
+        });
+    }
 });
 
 module.exports = router;
