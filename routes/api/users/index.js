@@ -50,28 +50,38 @@ router.get('/', function(req, res, next) {
     });
 });
 
-// GET /users/:uid
-router.get('/:uid', function(req, res, next) {
+//Read user from database
+router.use('/:uid', function(req, res, next) {
     User.findOne({ _id: req.params.uid }, function(err, user) {
         if (err) return next(err);
         if (user == null) {
             return res.status(400).json({ error: 'User does not exist.' })
         }
         else {
-            if (req.user && req.params.uid == req.user.uid) {
-                return res.json({ username: user.username, phone: user.phone, email: user.email, balance: user.balance / 100 });
-            }
-            else {
-                return res.json({ username: user.username, phone: user.phone, email: user.email });
-            }
+            req.dbDoc.user = user;
+            next();
         }
     });
+});
+
+// GET /users/:uid
+router.get('/:uid', function(req, res, next) {
+    var user = req.dbDoc.user;
+    
+    if (req.user && req.params.uid == req.user.uid) {
+        return res.json({ username: user.username, phone: user.phone, email: user.email, balance: user.balance / 100 });
+    }
+    else {
+        return res.json({ username: user.username, phone: user.phone, email: user.email });
+    }
 });
 
 router.use('/:uid', require('./verifyUserPermission'));
 
 // PUT /users/:uid
 router.put('/:uid', function(req, res, next) {
+    var user = req.dbDoc.user;
+    
     if (req.body.username == null) {
         return res.status(400).json({ error: 'Username is empty.' });
     }
@@ -79,29 +89,25 @@ router.put('/:uid', function(req, res, next) {
         return res.status(400).json({ error: 'Phone is empty.' });
     }
 
-    User.findOne({ _id: req.params.uid }).exec(function(err, user) {
-        if (err) return next(err);
+    user.username = req.body.username;
+    user.phone = req.body.phone;
+    user.email = req.body.email;
 
-        user.username = req.body.username;
-        user.phone = req.body.phone;
-        user.email = req.body.email;
-
-        if (req.body.password) {
-            if (req.body.oldPassword == null) {
-                return res.status(400).json({ error: 'Old password is empty.' });
-            }
-            else if (passwordEncrypt(req.body.oldPassword) != user.password) {
-                return res.status(400).json({ error: 'Wrong old password.' });
-            }
-            else {
-                user.password = passwordEncrypt(req.body.password);
-            }
+    if (req.body.password) {
+        if (req.body.oldPassword == null) {
+            return res.status(400).json({ error: 'Old password is empty.' });
         }
+        else if (passwordEncrypt(req.body.oldPassword) != user.password) {
+            return res.status(400).json({ error: 'Wrong old password.' });
+        }
+        else {
+            user.password = passwordEncrypt(req.body.password);
+        }
+    }
 
-        user.save(function(err) {
-            if (err) return next(err);
-            return res.json({});
-        });
+    user.save(function(err) {
+        if (err) return next(err);
+        return res.json({});
     });
 });
 

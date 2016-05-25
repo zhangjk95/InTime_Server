@@ -58,8 +58,7 @@ router.get('/', function(req, res, next) {
     });
 });
 
-// GET /templates/:tid
-router.get('/:tid', function(req, res, next) {
+router.use('/:tid', function(req, res, next) {
     Template.findOne({ _id: req.params.tid }).exec(function(err, template) {
         if (err) return next(err);
 
@@ -67,26 +66,37 @@ router.get('/:tid', function(req, res, next) {
             return res.status(400).json({error: 'Template does not exist.'})
         }
         else if (template.uid != req.user.uid) {
-            return res.status(403).json({ error: 'Permission denied.' });
+            return res.status(403).json({error: 'Permission denied.'});
         }
+        else {
+            req.dbDoc.template = template;
+            next();
+        }
+    });
+});
 
-        return res.json({
-            tid: template._id,
-            type: template.type,
-            title: template.title,
-            content: template.content,
-            category: template.category,
-            points: template.points,
-            number: template.number,
-            place: template.place,
-            coordinate: template.coordinate,
-            isPrivate: template.isPrivate
-        })
+// GET /templates/:tid
+router.get('/:tid', function(req, res, next) {
+    var template = req.dbDoc.template;
+
+    return res.json({
+        tid: template._id,
+        type: template.type,
+        title: template.title,
+        content: template.content,
+        category: template.category,
+        points: template.points,
+        number: template.number,
+        place: template.place,
+        coordinate: template.coordinate,
+        isPrivate: template.isPrivate
     });
 });
 
 // PUT /templates/:tid
 router.put('/:tid', function(req, res, next) {
+    var template = req.dbDoc.template;
+
     if (req.body.type == null) {
         return res.status(400).json({ error: 'Type is empty.' });
     }
@@ -94,54 +104,34 @@ router.put('/:tid', function(req, res, next) {
         return res.status(400).json({ error: 'Title is empty.' });
     }
 
-    Template.findOne({ _id: req.params.tid }).exec(function(err, template) {
+    template.type = req.body.type || template.type;
+    template.title = req.body.title || template.title;
+    template.content = req.body.content || template.content;
+    template.category = req.body.category || template.category;
+    template.points = req.body.points || template.points;
+    template.number = req.body.number || template.number;
+    template.place = req.body.place || template.place;
+    template.isPrivate = req.body.isPrivate || template.isPrivate;
+    if (req.body.coordinate.latitude != null && req.body.coordinate.longitude != null) {
+        template.coordinate = {
+            latitude: req.body.coordinate.latitude,
+            longitude : req.body.coordinate.longitude
+        };
+    }
+
+    template.save(function(err) {
         if (err) return next(err);
-
-        if (template == null) {
-            return res.status(400).json({error: 'Template does not exist.'})
-        }
-        else if (template.uid != req.user.uid) {
-            return res.status(403).json({ error: 'Permission denied.' });
-        }
-
-        template.type = req.body.type || template.type;
-        template.title = req.body.title || template.title;
-        template.content = req.body.content || template.content;
-        template.category = req.body.category || template.category;
-        template.points = req.body.points || template.points;
-        template.number = req.body.number || template.number;
-        template.place = req.body.place || template.place;
-        template.isPrivate = req.body.isPrivate || template.isPrivate;
-        if (req.body.coordinate.latitude != null && req.body.coordinate.longitude != null) {
-            template.coordinate = {
-                latitude: req.body.coordinate.latitude,
-                longitude : req.body.coordinate.longitude
-            };
-        }
-
-        template.save(function(err) {
-            if (err) return next(err);
-            return res.json({});
-        });
+        return res.json({});
     });
 });
 
 // DELETE /templates/:tid
 router.delete('/:tid', function(req, res, next) {
-    Template.findOne({ _id: req.params.tid }).exec(function(err, template) {
+    var template = req.dbDoc.template;
+
+    template.remove(function(err) {
         if (err) return next(err);
-
-        if (template == null) {
-            return res.status(400).json({error: 'Template does not exist.'})
-        }
-        else if (template.uid != req.user.uid) {
-            return res.status(403).json({ error: 'Permission denied.' });
-        }
-
-        template.remove(function(err) {
-            if (err) return next(err);
-            return res.status(204).end();
-        });
+        return res.status(204).end();
     });
 });
 

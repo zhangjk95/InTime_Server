@@ -1,5 +1,10 @@
 var router = require('express').Router();
 
+router.use(function(req, res, next) {
+    req.dbDoc = {};
+    next();
+});
+
 router.use('/users', require('./users'));
 router.use('/login', require('./login'));
 
