@@ -4,10 +4,10 @@ var Template = require(__base + 'models/template');
 
 // POST /templates
 router.post('/', function(req, res, next) {
-    if (req.body.type == null) {
-        return res.status(400).json({ error: 'Type is empty.' });
+    if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "notification") {
+        return res.status(400).json({ error: 'Type error.' });
     }
-    else if (req.body.title == null) {
+    else if (!req.body.title) {
         return res.status(400).json({ error: 'Title is empty.' });
     }
 
@@ -98,10 +98,10 @@ router.get('/:tid', function(req, res, next) {
 router.put('/:tid', function(req, res, next) {
     var template = req.dbDoc.template;
 
-    if (req.body.type == null) {
-        return res.status(400).json({ error: 'Type is empty.' });
+    if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "notification") {
+        return res.status(400).json({ error: 'Type error.' });
     }
-    else if (req.body.title == null) {
+    else if (!req.body.title) {
         return res.status(400).json({ error: 'Title is empty.' });
     }
 

@@ -5,13 +5,13 @@ var passwordEncrypt = require(__base + "passwordEncrypt");
 
 // POST /users
 router.post('/', function(req, res, next) {
-    if (req.body.username == null) {
+    if (!req.body.username) {
         return res.status(400).json({ error: 'Username is empty.' });
     }
-    else if (req.body.password == null) {
+    else if (!req.body.password) {
         return res.status(400).json({ error: 'Password is empty.' });
     }
-    else if (req.body.phone == null) {
+    else if (!req.body.phone) {
         return res.status(400).json({ error: 'Phone is empty.' });
     }
 
@@ -82,10 +82,10 @@ router.use('/:uid', require('./verifyUserPermission'));
 router.put('/:uid', function(req, res, next) {
     var user = req.dbDoc.user;
     
-    if (req.body.username == null) {
+    if (!req.body.username) {
         return res.status(400).json({ error: 'Username is empty.' });
     }
-    else if (req.body.phone == null) {
+    else if (!req.body.phone) {
         return res.status(400).json({ error: 'Phone is empty.' });
     }
 
@@ -94,7 +94,7 @@ router.put('/:uid', function(req, res, next) {
     user.email = req.body.email;
 
     if (req.body.password) {
-        if (req.body.oldPassword == null) {
+        if (!req.body.oldPassword) {
             return res.status(400).json({ error: 'Old password is empty.' });
         }
         else if (passwordEncrypt(req.body.oldPassword) != user.password) {
