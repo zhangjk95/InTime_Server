@@ -21,8 +21,8 @@ router.post('/', function(req, res, next) {
         number: req.body.number,
         place: req.body.place,
         coordinate: {
-            latitude: req.body.coordinate.latitude,
-            longitude: req.body.coordinate.longitude
+            latitude: req.body.coordinate != null ? req.body.coordinate.latitude : null,
+            longitude: req.body.coordinate != null ? req.body.coordinate.longitude : null
         },
         isPrivate: req.body.isPrivate
     });
@@ -58,6 +58,7 @@ router.get('/', function(req, res, next) {
     });
 });
 
+//read template from database
 router.use('/:tid', function(req, res, next) {
     Template.findOne({ _id: req.params.tid }).exec(function(err, template) {
         if (err) return next(err);
@@ -112,7 +113,7 @@ router.put('/:tid', function(req, res, next) {
     template.number = req.body.number || template.number;
     template.place = req.body.place || template.place;
     template.isPrivate = req.body.isPrivate || template.isPrivate;
-    if (req.body.coordinate.latitude != null && req.body.coordinate.longitude != null) {
+    if (req.body.coordinate != null) {
         template.coordinate = {
             latitude: req.body.coordinate.latitude,
             longitude : req.body.coordinate.longitude
