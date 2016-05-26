@@ -62,7 +62,7 @@ router.get('/', function(req, res, next) {
             condition['uid'] = req.query.uid;
         }
         if (req.query.accept_users_contains) {
-            condition['accept_users'] = req.query.accept_users_contains;
+            condition['accept_users'] = { $elemMatch: { uid: req.query.accept_users_contains }};
         }
         if (req.query.status) {
             condition['status'] = req.query.status;
@@ -187,7 +187,7 @@ router.put('/:oid', function(req, res, next) {
                     }
                 }
 
-                order.save(function(err) {
+                order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                     if (err) return next(err);
                     return res.json({ status : 'canceling' });
                 });
@@ -204,7 +204,7 @@ router.put('/:oid', function(req, res, next) {
                 }
             }
 
-            order.save(function(err) {
+            order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                 if (err) return next(err);
 
                 //TODO: modify balance
@@ -268,5 +268,7 @@ router.put('/:oid', function(req, res, next) {
         });
     }
 });
+
+router.use(require('./accept_users'));
 
 module.exports = router;

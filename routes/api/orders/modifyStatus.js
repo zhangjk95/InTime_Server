@@ -12,6 +12,7 @@ module.exports = function(order) {
         order.status = 'canceled';
         
         //TODO: notify
+        //TODO: modify balance
     }
     else {
         order.status = 'waiting';

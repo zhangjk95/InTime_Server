@@ -69,7 +69,7 @@ router.get('/:uid', function(req, res, next) {
     var user = req.dbDoc.user;
     
     if (req.user && req.params.uid == req.user.uid) {
-        return res.json({ username: user.username, phone: user.phone, email: user.email, balance: user.balance / 100 });
+        return res.json({ username: user.username, phone: user.phone, email: user.email, balance: user.balance });
     }
     else {
         return res.json({ username: user.username, phone: user.phone, email: user.email });
@@ -89,25 +89,33 @@ router.put('/:uid', function(req, res, next) {
         return res.status(400).json({ error: 'Phone is empty.' });
     }
 
-    user.username = req.body.username;
-    user.phone = req.body.phone;
-    user.email = req.body.email;
-
-    if (req.body.password) {
-        if (!req.body.oldPassword) {
-            return res.status(400).json({ error: 'Old password is empty.' });
-        }
-        else if (passwordEncrypt(req.body.oldPassword) != user.password) {
-            return res.status(400).json({ error: 'Wrong old password.' });
+    User.findOne({username: req.body.username}).exec(function(err, result) {
+        if (err) return next(err);
+        if (result) {
+            return res.status(400).json({ error: 'Username already exists.' });
         }
         else {
-            user.password = passwordEncrypt(req.body.password);
-        }
-    }
+            user.username = req.body.username;
+            user.phone = req.body.phone;
+            user.email = req.body.email;
 
-    user.save(function(err) {
-        if (err) return next(err);
-        return res.json({});
+            if (req.body.password) {
+                if (!req.body.oldPassword) {
+                    return res.status(400).json({ error: 'Old password is empty.' });
+                }
+                else if (passwordEncrypt(req.body.oldPassword) != user.password) {
+                    return res.status(400).json({ error: 'Wrong old password.' });
+                }
+                else {
+                    user.password = passwordEncrypt(req.body.password);
+                }
+            }
+
+            user.save(function(err) {
+                if (err) return next(err);
+                return res.json({});
+            });
+        }
     });
 });
 
