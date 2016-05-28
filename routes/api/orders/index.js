@@ -1,5 +1,7 @@
 var router = require('express').Router();
 
+var ObjectId = require('mongoose').Types.ObjectId;
+
 var Order = require(__base + 'models/order');
 var User = require(__base + 'models/user');
 var modifyStatus = require('./modifyStatus');
@@ -21,7 +23,7 @@ router.post('/', function(req, res, next) {
     }
 
     var order = new Order({
-        uid: req.user.uid,
+        uid: ObjectId(req.user.uid),
         type: req.body.type,
         title: req.body.title,
         content: req.body.content,
@@ -62,7 +64,7 @@ router.get('/', function(req, res, next) {
             condition['uid'] = req.query.uid;
         }
         if (req.query.accept_users_contains) {
-            condition['accept_users'] = { $elemMatch: { uid: req.query.accept_users_contains }};
+            condition['accept_users'] = { $elemMatch: { uid: ObjectId(req.query.accept_users_contains) }};
         }
         if (req.query.status) {
             condition['status'] = req.query.status;
@@ -71,12 +73,12 @@ router.get('/', function(req, res, next) {
             }
         }
 
-        User.findOne({ _id: req.user.uid }, function (err, user) {
+        User.findOne({ _id: ObjectId(req.user.uid) }, function (err, user) {
             if (err) return next(err);
 
             condition['$or'] = [
-                { uid: { $in: user.friends.map((friend) => friend.uid) }, isPrivate: true },
-                { uid: req.user.uid, isPrivate: true },
+                { uid: { $in: user.friends.map((friend) => ObjectId(friend.uid)) }, isPrivate: true },
+                { uid: ObjectId(req.user.uid), isPrivate: true },
                 { isPrivate: false }
             ];
 
@@ -108,7 +110,7 @@ router.get('/', function(req, res, next) {
 
 //read order from database
 router.use('/:oid', function(req, res, next) {
-    Order.findOne({ _id: req.params.oid }).exec(function(err, order) {
+    Order.findOne({ _id: ObjectId(req.params.oid) }).exec(function(err, order) {
         if (err) return next(err);
 
         if (order == null) {
@@ -120,7 +122,7 @@ router.use('/:oid', function(req, res, next) {
                 next();
             }
             else {
-                User.findOne({ _id: req.user.uid }, function (err, user) {
+                User.findOne({ _id: ObjectId(req.user.uid) }, function (err, user) {
                     if (user.friends.some((friend) => friend.uid == order.uid)) {
                         req.dbDoc.order = order;
                         next();

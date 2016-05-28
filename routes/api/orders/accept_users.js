@@ -1,6 +1,7 @@
 var router = require('express').Router();
 
 var util = require('util');
+var ObjectId = require('mongoose').Types.ObjectId;
 
 var Order = require(__base + 'models/order');
 var User = require(__base + 'models/user');
@@ -23,7 +24,7 @@ router.post('/:oid/accept_users/:uid', function(req, res, next) {
     var acceptUser = order.accept_users.filter((acceptUser) => acceptUser.uid == req.params.uid)[0];
 
     if (acceptUser == null) {
-        order.accept_users.push({ uid: req.params.uid, status: 'accepted' });
+        order.accept_users.push({ uid: ObjectId(req.params.uid), status: 'accepted' });
         modifyStatus(order);
         order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
             if (err) return next(err);

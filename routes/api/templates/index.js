@@ -1,5 +1,7 @@
 var router = require('express').Router();
 
+var ObjectId = require('mongoose').Types.ObjectId;
+
 var Template = require(__base + 'models/template');
 
 // POST /templates
@@ -12,7 +14,7 @@ router.post('/', function(req, res, next) {
     }
 
     var template = new Template({
-        uid: req.user.uid,
+        uid: ObjectId(req.user.uid),
         type: req.body.type,
         title: req.body.title,
         content: req.body.content,
@@ -60,7 +62,7 @@ router.get('/', function(req, res, next) {
 
 //read template from database
 router.use('/:tid', function(req, res, next) {
-    Template.findOne({ _id: req.params.tid }).exec(function(err, template) {
+    Template.findOne({ _id: ObjectId(req.params.tid) }).exec(function(err, template) {
         if (err) return next(err);
 
         if (template == null) {

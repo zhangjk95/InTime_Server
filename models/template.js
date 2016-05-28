@@ -1,8 +1,9 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
+var ObjectId = Schema.Types.ObjectId;
 
 module.exports = mongoose.model('template', new Schema({
-    uid: String,
+    uid: ObjectId,
     type: String,
     title: String,
     content: String,

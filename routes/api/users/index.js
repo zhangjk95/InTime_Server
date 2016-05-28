@@ -1,5 +1,7 @@
 var router = require('express').Router();
 
+var ObjectId = require('mongoose').Types.ObjectId;
+
 var User = require(__base + 'models/user');
 var passwordEncrypt = require(__base + "passwordEncrypt");
 
@@ -52,7 +54,7 @@ router.get('/', function(req, res, next) {
 
 //Read user from database
 router.use('/:uid', function(req, res, next) {
-    User.findOne({ _id: req.params.uid }, function(err, user) {
+    User.findOne({ _id: ObjectId(req.params.uid) }, function(err, user) {
         if (err) return next(err);
         if (user == null) {
             return res.status(400).json({ error: 'User does not exist.' })
