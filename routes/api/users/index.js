@@ -91,7 +91,7 @@ router.put('/:uid', function(req, res, next) {
 
     User.findOne({username: req.body.username}).exec(function(err, result) {
         if (err) return next(err);
-        if (result) {
+        if (result && result._id != req.user.uid) {
             return res.status(400).json({ error: 'Username already exists.' });
         }
         else {
