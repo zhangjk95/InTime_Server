@@ -61,7 +61,7 @@ router.get('/', function(req, res, next) {
 
     if (req.query.uid == req.user.uid || req.query.accept_users_contains == req.user.uid || req.query.status == 'waiting') {
         if (req.query.uid) {
-            condition['uid'] = req.query.uid;
+            condition['uid'] = ObjectId(req.query.uid);
         }
         if (req.query.accept_users_contains) {
             condition['accept_users'] = { $elemMatch: { uid: ObjectId(req.query.accept_users_contains) }};
