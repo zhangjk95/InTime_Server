@@ -1,12 +1,24 @@
 var router = require('express').Router();
 
 var util = require('util');
+var ObjectId = require('mongoose').Types.ObjectId;
 
 var User = require(__base + 'models/user');
 
 // GET /users/:uid/friends
 router.get('/:uid/friends', function(req, res, next) {
-    return res.json({ friends: req.dbDoc.user.friends });
+    var user = req.dbDoc.user;
+    User.aggregate([
+        { $match: { _id: ObjectId(req.params.uid) }},
+        { $unwind: '$friends' },
+        { $project: { _id: false, friends: true } },
+        { $lookup: { from: "users", localField: "friends.uid", foreignField: "_id", as: "userInfo" }},
+        { $unwind: '$userInfo' },
+        { $project: { uid: "$friends.uid", status: "$friends.status", username: "$userInfo.username" }}
+    ], function(err, data) {
+        if (err) return next(err);
+        return res.json(data);
+    });
 });
 
 //Read friend user from database
