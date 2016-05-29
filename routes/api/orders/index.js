@@ -15,11 +15,11 @@ router.post('/', function(req, res, next) {
     if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "notification") {
         return res.status(400).json({ error: 'Type error.' });
     }
-    if ((req.body.type == "request" || req.body.type == "offer") && isNaN(req.body.points)) {
-        return res.status(400).json({ error: 'Points must be an integer.' });
+    if ((req.body.type == "request" || req.body.type == "offer") && (isNaN(req.body.points) || parseInt(req.body.points) < 0)) {
+        return res.status(400).json({ error: 'Points must be a non-negative integer.' });
     }
     if ((req.body.type == "request" || req.body.type == "offer") && (isNaN(req.body.number) || parseInt(req.body.number) <= 0)) {
-        return res.status(400).json({ error: 'Number must be positive.' });
+        return res.status(400).json({ error: 'Number must be a positive integer.' });
     }
 
     var order = new Order({
@@ -40,19 +40,36 @@ router.post('/', function(req, res, next) {
     });
 
     if (req.body.type == "request" || req.body.type == "offer") {
-        order.points = req.body.points;
-        order.number = req.body.number;
+        order.points = parseInt(req.body.points);
+        order.number = parseInt(req.body.number);
     }
 
-    order.save(function(err) {
-        if (err) return next(err);
+    var save = function() {
+        order.save(function (err) {
+            if (err) return next(err);
 
-        //TODO: modify balance
+            return res.status(201)
+                .header("location", "/api/order/" + order._id)
+                .json({oid: order._id, status: "waiting"});
+        });
+    };
 
-        return res.status(201)
-            .header("location", "/api/order/" + order._id)
-            .json({ oid: order._id, status: "waiting" });
-    });
+    if (order.type == "request" && order.points > 0) {
+        var decrement = order.points * order.number;
+        User.findOneAndUpdate({ _id: ObjectId(order.uid), balance: { $gte: decrement } }, { $inc: { balance: -decrement } }, function (err, result) {
+            if (err) return next(err);
+
+            if (result) {
+                save();
+            }
+            else {
+                return res.status(400).json({ error: 'Insufficient balance.' });
+            }
+        });
+    }
+    else {
+        save();
+    }
 });
 
 // GET /orders
@@ -167,27 +184,43 @@ router.put('/:oid', function(req, res, next) {
     }
 
     if (req.body.status) {
+        var acceptUsers = order.accept_users.filter((acceptUser) => acceptUser.status == 'accepted' || acceptUser.status == 'canceling');
+
         if (req.body.status == 'cancel' && (order.status == 'waiting' || order.status == 'accepted')) {
-            if (order.type == 'offer' || order.type == 'notification' || order.type == 'request' && !order.accept_users.some((acceptUser) => acceptUser.status == 'accepted')) {
+            if (order.type == 'offer' || order.type == 'notification' || order.type == 'request' && !order.accept_users.some((acceptUser) => acceptUser.status == 'accepted' || acceptUser.status == 'canceling')) {
                 order.status = 'canceled';
-                order.save(function(err) {
+
+                acceptUsers.forEach((acceptUser) => {
+                    acceptUser.status = 'canceled';
+                    //TODO: notify
+                });
+
+                order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                     if (err) return next(err);
 
-                    //TODO: modify balance
-
-                    return res.json({ status : 'canceled' });
+                    if (order.type == 'request') {
+                        User.update({ _id: ObjectId(order.uid) }, { $inc: { balance: order.points * order.number }}, function(err) {
+                            if (err) return next(err);
+                            return res.json({ status : 'canceled' });
+                        });
+                    }
+                    else if (order.type == 'offer') {
+                        User.update({ _id: { $in: acceptUsers.map((acceptUser) => ObjectId(acceptUser.uid)) } }, { $inc: { balance: order.points }}, function(err) {
+                            if (err) return next(err);
+                            return res.json({ status : 'canceled' });
+                        });
+                    }
+                    else {
+                        return res.json({ status : 'canceled' });
+                    }
                 });
             }
             else if (order.type == 'request') {
                 order.status = 'canceling';
-                for (var i in order.accept_users) {
-                    var acceptUser = order.accept_users[i];
-                    if (acceptUser.status == 'accepted') {
-                        acceptUser.status = 'canceling';
-
-                        //TODO: notify
-                    }
-                }
+                acceptUsers.forEach((acceptUser) => {
+                    acceptUser.status = 'canceling';
+                    //TODO: notify
+                });
 
                 order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                     if (err) return next(err);
@@ -197,21 +230,18 @@ router.put('/:oid', function(req, res, next) {
         }
         else if (req.body.status == 'completed' && order.type == 'request' && order.status == 'accepted') {
             order.status = 'completed';
-            for (var i in order.accept_users) {
-                var acceptUser = order.accept_users[i];
-                if (acceptUser.status == 'accepted') {
-                    acceptUser.status = 'completed';
-
-                    //TODO: notify
-                }
-            }
+            acceptUsers.forEach((acceptUser) => {
+                acceptUser.status = 'completed';
+                //TODO: notify
+            });
 
             order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                 if (err) return next(err);
 
-                //TODO: modify balance
-
-                return res.json({ status : 'completed' });
+                User.update({ _id: { $in: acceptUsers.map((acceptUser) => ObjectId(acceptUser.uid)) } }, { $inc: { balance: order.points }}, function(err) {
+                    if (err) return next(err);
+                    return res.json({ status : 'completed' });
+                });
             });
         }
         else {
@@ -226,17 +256,20 @@ router.put('/:oid', function(req, res, next) {
         if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "notification") {
             return res.status(400).json({error: 'Type error.'});
         }
-        if ((req.body.type == "request" || req.body.type == "offer") && isNaN(req.body.points)) {
-            return res.status(400).json({error: 'Points must be an integer.'});
+        if ((req.body.type == "request" || req.body.type == "offer") && (isNaN(req.body.points) || parseInt(req.body.points) < 0)) {
+            return res.status(400).json({ error: 'Points must be a non-negative integer.' });
         }
         if ((req.body.type == "request" || req.body.type == "offer") && (isNaN(req.body.number) || parseInt(req.body.number) <= 0)) {
-            return res.status(400).json({error: 'Number must be positive.'});
+            return res.status(400).json({ error: 'Number must be a positive integer.' });
         }
 
+        var origPoints = order.points * order.number;
+        var acceptUsers = order.accept_users.filter((acceptUser) => acceptUser.status != 'canceled');
+
         order.isPrivate = req.body.isPrivate;
+
         if (req.body.type == "request" || req.body.type == "offer") {
-            var currentNumber = order.accept_users.filter((acceptUser) => acceptUser.status != 'canceled').length;
-            if (req.body.number < currentNumber) {
+            if (req.body.number < acceptUsers.length) {
                 return res.status(400).json({error: "Number must greater or equal than number of accepted users."});
             }
             else {
@@ -245,7 +278,7 @@ router.put('/:oid', function(req, res, next) {
             }
         }
 
-        if (!order.accept_users.some((acceptUser) => acceptUser.status != 'canceled')) {
+        if (!acceptUsers) {
             order.title = req.body.title;
             order.content = req.body.content;
             order.category = req.body.category;
@@ -261,13 +294,30 @@ router.put('/:oid', function(req, res, next) {
             }
         }
 
-        order.save(function (err) {
-            if (err) return next(err);
+        var delta = order.points * order.number - origPoints;
 
-            //TODO: modify balance
+        var save = function() {
+            order.save(function (err) {
+                if (err) return next(err);
+                return res.json({});
+            });
+        };
 
-            return res.json({});
-        });
+        if (order.type == "request" && delta != 0) {
+            User.findOneAndUpdate({ _id: ObjectId(order.uid), balance: { $gte: delta } }, { $inc: { balance: -delta } }, function (err, result) {
+                if (err) return next(err);
+
+                if (result) {
+                    save();
+                }
+                else {
+                    return res.status(400).json({ error: 'Insufficient balance.' });
+                }
+            });
+        }
+        else {
+            save();
+        }
     }
 });
 

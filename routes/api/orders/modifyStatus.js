@@ -10,9 +10,6 @@ module.exports = function(order) {
     }
     else if (order.status == 'canceling' && order.accept_users.every((acceptUser) => acceptUser.status == 'canceled' || acceptUser.status == 'completed')) {
         order.status = 'canceled';
-        
-        //TODO: notify
-        //TODO: modify balance
     }
     else {
         order.status = 'waiting';

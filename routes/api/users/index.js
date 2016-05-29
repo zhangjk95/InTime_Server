@@ -122,5 +122,6 @@ router.put('/:uid', function(req, res, next) {
 });
 
 router.use(require('./friends'));
+router.use(require('./balance'));
 
 module.exports = router;
