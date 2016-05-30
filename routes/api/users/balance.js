@@ -20,7 +20,7 @@ router.post('/:uid/balance/promotion/:promotion_code', function(req, res, next) 
         });
     }
     else {
-        return res.status(400).json({ error: "Invalid promotion code."});
+        return res.status(422).json({ error: "Invalid promotion code."});
     }
 });
 

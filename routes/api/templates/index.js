@@ -66,7 +66,7 @@ router.use('/:tid', function(req, res, next) {
         if (err) return next(err);
 
         if (template == null) {
-            return res.status(400).json({error: 'Template does not exist.'})
+            return res.status(404).json({error: 'Template not found.'})
         }
         else if (template.uid != req.user.uid) {
             return res.status(403).json({error: 'Permission denied.'});

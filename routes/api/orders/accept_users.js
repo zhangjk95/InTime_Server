@@ -15,10 +15,10 @@ router.post('/:oid/accept_users/:uid', function(req, res, next) {
         return res.status(403).json({ error: 'Permission denied.' });
     }
     else if (order.uid == req.user.uid) {
-        return res.status(400).json({ error: 'Cannot accept your own order.' });
+        return res.status(422).json({ error: 'Cannot accept your own order.' });
     }
     else if (order.type == 'notification' || order.status != 'waiting') {
-        return res.status(400).json({ error: 'Cannot accept this order.' });
+        return res.status(422).json({ error: 'Cannot accept this order.' });
     }
 
     var acceptUser = order.accept_users.filter((acceptUser) => acceptUser.uid == req.params.uid)[0];
@@ -49,7 +49,7 @@ router.post('/:oid/accept_users/:uid', function(req, res, next) {
             });
         }
         else {
-            return res.status(400).json({ error: 'Order already accepted.' });
+            return res.status(409).json({ error: 'Order already accepted.' });
         }
     };
 
@@ -61,7 +61,7 @@ router.post('/:oid/accept_users/:uid', function(req, res, next) {
                 addAcceptUser();
             }
             else {
-                return res.status(400).json({ error: 'Insufficient balance.' });
+                return res.status(403).json({ error: 'Insufficient balance.' });
             }
         });
     }
@@ -77,7 +77,7 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
     var acceptUser = order.accept_users.filter((acceptUser) => acceptUser.uid == req.params.uid)[0];
     
     if (acceptUser == null) {
-        return res.status(400).json({ error: "User not found" });
+        return res.status(404).json({ error: "User not found" });
     }
 
     if (req.body.status == 'cancel') {
@@ -113,7 +113,7 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
                 });
             }
             else {
-                return res.status(400).json({ error: "Failed to cancel." });
+                return res.status(403).json({ error: "Status cannot be modified." });
             }
         }
         else if (acceptUser.uid == req.user.uid) {
@@ -148,7 +148,7 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
                 });
             }
             else {
-                return res.status(400).json({ error: "Status cannot be modified." });
+                return res.status(403).json({ error: "Status cannot be modified." });
             }
         }
         else {
@@ -177,7 +177,7 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
                 });
             }
             else {
-                return res.status(400).json({ error: "Status cannot be modified." });
+                return res.status(403).json({ error: "Status cannot be modified." });
             }
         }
         else {
@@ -198,7 +198,7 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
                 });
             }
             else {
-                return res.status(400).json({ error: "Status cannot be modified." });
+                return res.status(403).json({ error: "Status cannot be modified." });
             }
         }
         else {

@@ -20,7 +20,7 @@ router.post('/', function(req, res, next) {
     User.findOne({username: req.body.username}).exec(function(err, result) {
         if (err) return next(err);
         if (result) {
-            return res.status(400).json({ error: 'Username already exists.' });
+            return res.status(409).json({ error: 'Username already exists.' });
         }
         else {
             var user = new User({
@@ -57,7 +57,7 @@ router.use('/:uid', function(req, res, next) {
     User.findOne({ _id: ObjectId(req.params.uid) }, function(err, user) {
         if (err) return next(err);
         if (user == null) {
-            return res.status(400).json({ error: 'User does not exist.' })
+            return res.status(404).json({ error: 'User does not exist.' })
         }
         else {
             req.dbDoc.user = user;
@@ -94,7 +94,7 @@ router.put('/:uid', function(req, res, next) {
     User.findOne({username: req.body.username}).exec(function(err, result) {
         if (err) return next(err);
         if (result && result._id != req.user.uid) {
-            return res.status(400).json({ error: 'Username already exists.' });
+            return res.status(409).json({ error: 'Username already exists.' });
         }
         else {
             user.username = req.body.username;
@@ -106,7 +106,7 @@ router.put('/:uid', function(req, res, next) {
                     return res.status(400).json({ error: 'Old password is empty.' });
                 }
                 else if (passwordEncrypt(req.body.oldPassword) != user.password) {
-                    return res.status(400).json({ error: 'Wrong old password.' });
+                    return res.status(403).json({ error: 'Wrong old password.' });
                 }
                 else {
                     user.password = passwordEncrypt(req.body.password);

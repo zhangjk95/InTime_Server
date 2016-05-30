@@ -63,7 +63,7 @@ router.post('/', function(req, res, next) {
                 save();
             }
             else {
-                return res.status(400).json({ error: 'Insufficient balance.' });
+                return res.status(403).json({ error: 'Insufficient balance.' });
             }
         });
     }
@@ -131,7 +131,7 @@ router.use('/:oid', function(req, res, next) {
         if (err) return next(err);
 
         if (order == null) {
-            return res.status(400).json({error: 'Order does not exist.'})
+            return res.status(404).json({error: 'Order not found.'})
         }
         else {
             if (order.isPrivate == false || order.uid == req.user.uid || order.accept_users.some((acceptUser) => acceptUser.uid == req.user.uid)) {
@@ -270,7 +270,7 @@ router.put('/:oid', function(req, res, next) {
 
         if (req.body.type == "request" || req.body.type == "offer") {
             if (req.body.number < acceptUsers.length) {
-                return res.status(400).json({error: "Number must greater or equal than number of accepted users."});
+                return res.status(422).json({error: "Number must greater or equal than number of accepted users."});
             }
             else {
                 order.number = req.body.number;
@@ -311,7 +311,7 @@ router.put('/:oid', function(req, res, next) {
                     save();
                 }
                 else {
-                    return res.status(400).json({ error: 'Insufficient balance.' });
+                    return res.status(403).json({ error: 'Insufficient balance.' });
                 }
             });
         }

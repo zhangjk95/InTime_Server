@@ -26,7 +26,7 @@ router.use('/:uid/friends/:friend_uid', function(req, res, next) {
     User.findOne({ _id: ObjectId(req.params.friend_uid) }, function(err, friendUser) {
         if (err) return next(err);
         if (friendUser == null) {
-            return res.status(400).json({ error: 'Friend user does not exist.' })
+            return res.status(422).json({ error: 'Friend user does not exist.' })
         }
         else {
             req.dbDoc.friendUser = friendUser;
@@ -70,10 +70,10 @@ router.post('/:uid/friends/:friend_uid', function(req, res, next) {
         });
     }
     else if (friend.status == 'waiting') {
-        return res.status(400).json({ error: 'Friend request already sent.' });
+        return res.status(409).json({ error: 'Friend request already sent.' });
     }
     else if (friend.status == 'accepted') {
-        return res.status(400).json({ error: 'User is already a friend.' });
+        return res.status(409).json({ error: 'User is already a friend.' });
     }
 });
 
@@ -84,7 +84,7 @@ router.delete('/:uid/friends/:friend_uid', function(req, res, next) {
 
     var friend = user.friends.filter((friend) => friend.uid == req.params.friend_uid)[0];
     if (friend == null) {
-        return res.status(400).json({error: 'User is not a friend yet.'})
+        return res.status(404).json({error: 'User is not a friend yet.'})
     }
 
     user.update({ $pull: { friends: { uid: ObjectId(req.params.friend_uid) }}}, function(err) {
