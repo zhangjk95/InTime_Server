@@ -16,5 +16,6 @@ router.use(require('./verifyToken'));
 
 router.use('/orders', require('./orders'));
 router.use('/templates', require('./templates'));
+router.use('/notifications', require('./notifications'));
 
 module.exports = router;

@@ -6,6 +6,7 @@ var ObjectId = require('mongoose').Types.ObjectId;
 var Order = require(__base + 'models/order');
 var User = require(__base + 'models/user');
 var modifyStatus = require('./modifyStatus');
+var sendNotification = require(__base + 'notification');
 
 // POST /orders/:oid/accept_users/:uid
 router.post('/:oid/accept_users/:uid', function(req, res, next) {
@@ -30,7 +31,7 @@ router.post('/:oid/accept_users/:uid', function(req, res, next) {
             order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                 if (err) return next(err);
 
-                //TODO: notify
+                sendNotification(order.uid, 'order', util.format('Someone has accepted your %s.', order.type), { oid: order._id });
 
                 return res.status(201)
                     .header('location', util.format('/orders/%s/accept_users/%s', req.params.oid, req.params.uid))
@@ -43,7 +44,7 @@ router.post('/:oid/accept_users/:uid', function(req, res, next) {
             order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                 if (err) return next(err);
 
-                //TODO: notify
+                sendNotification(order.uid, 'order', util.format('Someone has accepted your %s.', order.type), { oid: order._id });
 
                 return res.json({ status: "accepted" });
             });
@@ -88,7 +89,7 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
                 order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                     if (err) return next(err);
 
-                    //TODO: notify
+                    sendNotification(acceptUser.uid, 'order', 'Someone wants to cancel the request you accepted.', { oid: order._id });
 
                     return res.json({ status: "canceling" });
                 });
@@ -99,7 +100,7 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
                 order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                     if (err) return next(err);
 
-                    //TODO: notify
+                    sendNotification(acceptUser.uid, 'order', 'Someone has canceled the offer you accepted.', { oid: order._id });
 
                     if (order.points != 0) {
                         User.update({ _id: ObjectId(acceptUser.uid) }, { $inc: { balance: order.points }}, function(err) {
@@ -123,7 +124,7 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
                 order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                     if (err) return next(err);
 
-                    //TODO: notify
+                    sendNotification(order.uid, 'order', 'Someone has canceled your request.', { oid: order._id });
 
                     if (order.status == 'canceled' && order.points != 0) {
                         User.update({ _id: ObjectId(order.uid) }, { $inc: { balance: order.points * order.number }}, function(err) {
@@ -142,7 +143,7 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
                 order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                     if (err) return next(err);
 
-                    //TODO: notify
+                    sendNotification(order.uid, 'order', 'Someone wants to cancel your offer.', { oid: order._id });
 
                     return res.json({ status: "canceling" });
                 });
@@ -163,7 +164,7 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
                 order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                     if (err) return next(err);
 
-                    //TODO: notify
+                    sendNotification(order.uid, 'order', 'Your offer to someone is completed', { oid: order._id });
 
                     if (order.points != 0) {
                         User.update({ _id: ObjectId(order.uid) }, { $inc: { balance: order.points }}, function(err) {
@@ -192,7 +193,7 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
                 order.update({ status: order.status, accept_users: order.accept_users }, function (err) {
                     if (err) return next(err);
 
-                    //TODO: notify
+                    sendNotification(order.uid, 'order', 'Someone has denied to cancel your request.', { oid: order._id });
 
                     return res.json({status: "accepted"});
                 });

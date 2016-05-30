@@ -5,6 +5,7 @@ var ObjectId = require('mongoose').Types.ObjectId;
 var Order = require(__base + 'models/order');
 var User = require(__base + 'models/user');
 var modifyStatus = require('./modifyStatus');
+var sendNotification = require(__base + 'notification');
 
 // POST /orders
 router.post('/', function(req, res, next) {
@@ -192,7 +193,7 @@ router.put('/:oid', function(req, res, next) {
 
                 acceptUsers.forEach((acceptUser) => {
                     acceptUser.status = 'canceled';
-                    //TODO: notify
+                    sendNotification(acceptUser.uid, 'order', 'Someone has canceled the offer you accepted.', { oid: order._id });
                 });
 
                 order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
@@ -219,7 +220,7 @@ router.put('/:oid', function(req, res, next) {
                 order.status = 'canceling';
                 acceptUsers.forEach((acceptUser) => {
                     acceptUser.status = 'canceling';
-                    //TODO: notify
+                    sendNotification(acceptUser.uid, 'order', 'Someone wants to cancel the request you accepted.', { oid: order._id });
                 });
 
                 order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
@@ -232,7 +233,7 @@ router.put('/:oid', function(req, res, next) {
             order.status = 'completed';
             acceptUsers.forEach((acceptUser) => {
                 acceptUser.status = 'completed';
-                //TODO: notify
+                sendNotification(acceptUser.uid, 'order', 'The request you accepted is completed.', { oid: order._id });
             });
 
             order.update({ status: order.status, accept_users: order.accept_users }, function(err) {

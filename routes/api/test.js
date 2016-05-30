@@ -5,6 +5,7 @@ var ObjectId = require('mongoose').Types.ObjectId;
 var User = require(__base + 'models/user');
 var Template = require(__base + 'models/template');
 var Order = require(__base + 'models/order');
+var sendNotification = require(__base + 'notification');
 
 // GET /test
 router.get('/', function(req, res, next) {

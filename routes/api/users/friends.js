@@ -4,10 +4,10 @@ var util = require('util');
 var ObjectId = require('mongoose').Types.ObjectId;
 
 var User = require(__base + 'models/user');
+var sendNotification = require(__base + 'notification');
 
 // GET /users/:uid/friends
 router.get('/:uid/friends', function(req, res, next) {
-    var user = req.dbDoc.user;
     User.aggregate([
         { $match: { _id: ObjectId(req.params.uid) }},
         { $unwind: '$friends' },
@@ -48,7 +48,7 @@ router.post('/:uid/friends/:friend_uid', function(req, res, next) {
             friendUser.update({ $push: { friends: { uid: ObjectId(req.params.uid), status: 'pending' }}}, function(err) {
                 if (err) return next(err);
 
-                //TODO: notify
+                sendNotification(friendUser.uid, 'friend', 'You have received a friend request.', { uid: user._id });
 
                 return res.status(201)
                     .header('location', util.format('/users/%s/friends/%s', req.params.uid, req.params.friend_uid))
@@ -63,7 +63,7 @@ router.post('/:uid/friends/:friend_uid', function(req, res, next) {
             User.update({ _id: ObjectId(req.params.friend_uid), "friends.uid": ObjectId(req.params.uid) }, { $set: { "friends.$.status": "accepted" }}, function(err) {
                 if (err) return next(err);
 
-                //TODO: notify
+                sendNotification(friendUser.uid, 'friend', 'Your friend request is accepted.', { uid: user._id });
 
                 return res.json({ status: "accepted" });
             });
