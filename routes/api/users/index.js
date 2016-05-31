@@ -48,7 +48,7 @@ router.use(require('../verifyToken'));
 router.get('/', function(req, res, next) {
     User.find({ username: {$regex: req.query.username_like, $options: 'i'} }, function(err, users) {
         if (err) return next(err);
-        return res.json({ users: users.map((user) => ({ uid: user._id, username: user.username })) });
+        return res.json({ users: users.filter((user) => user._id != req.user.uid).map((user) => ({ uid: user._id, username: user.username })) });
     });
 });
 

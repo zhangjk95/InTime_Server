@@ -40,6 +40,10 @@ router.post('/:uid/friends/:friend_uid', function(req, res, next) {
     var user = req.dbDoc.user;
     var friendUser = req.dbDoc.friendUser;
 
+    if (friendUser.uid == req.user.uid) {
+        return res.status(422).json({ error: 'You cannot add yourself as a friend.' });
+    }
+
     var friend = user.friends.filter((friend) => friend.uid == req.params.friend_uid)[0];
     if (friend == null) {
         user.update({ $push: { friends: { uid: ObjectId(req.params.friend_uid), status: 'waiting' }}}, function(err) {
