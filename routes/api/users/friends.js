@@ -17,7 +17,7 @@ router.get('/:uid/friends', function(req, res, next) {
         { $project: { uid: "$friends.uid", status: "$friends.status", username: "$userInfo.username" }}
     ], function(err, data) {
         if (err) return next(err);
-        return res.json(data);
+        return res.json({ friends: data });
     });
 });
 
