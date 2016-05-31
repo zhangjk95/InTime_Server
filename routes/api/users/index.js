@@ -74,7 +74,10 @@ router.get('/:uid', function(req, res, next) {
         return res.json({ username: user.username, phone: user.phone, email: user.email, balance: user.balance });
     }
     else {
-        return res.json({ username: user.username, phone: user.phone, email: user.email });
+        User.findOne({ _id: req.user.uid }, function (err, requestUser) {
+            var friend = requestUser.friends.filter((friend) => friend.uid == req.params.uid)[0];
+            return res.json({ username: user.username, phone: user.phone, email: user.email, status: friend != null ? friend.status : "none" });
+        });
     }
 });
 
