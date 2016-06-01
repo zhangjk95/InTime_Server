@@ -90,6 +90,12 @@ router.get('/', function(req, res, next) {
                 condition['time'] = { $gte: new Date() };
             }
         }
+        if (req.query.title_or_content_like) {
+            condition['$and'] = req.query.title_or_content_like.split(/\s+/).map((keyword) => ({ $or: [
+                { title: { $regex: keyword, $options: 'i' } },
+                { content: { $regex: keyword, $options: 'i' } }
+            ]}));
+        }
 
         User.findOne({ _id: ObjectId(req.user.uid) }, function (err, user) {
             if (err) return next(err);
