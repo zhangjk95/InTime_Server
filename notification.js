@@ -6,21 +6,7 @@ var myUtil = require('./myUtil');
 var User = require(__base + 'models/user');
 var Notification = require(__base + 'models/notification');
 
-var save = function(uid, type, message, details) {
-    var notification = new Notification({
-        uid: uid,
-        type: type,
-        message: message,
-        details: details,
-        read: false
-    });
-
-    notification.save(function(err) {
-        if (err) return console.error(err);
-    });
-};
-
-var send = function(uid, type, message, details) {
+var send = function(uid, nid, type, message, details) {
     User.findOne({ _id: ObjectId(uid) }, function(err, user) {
         if (err) return console.error(err);
         if (!user.reg_tokens || user.reg_tokens.length == 0) return;
@@ -54,6 +40,16 @@ var send = function(uid, type, message, details) {
 };
 
 module.exports = function(uid, type, message, details) {
-    save(uid, type, message, details);
-    send(uid, type, message, details);
+    var notification = new Notification({
+        uid: uid,
+        type: type,
+        message: message,
+        details: details,
+        read: false
+    });
+
+    notification.save(function(err) {
+        if (err) return console.error(err);
+        send(uid, notification._id, type, message, details);
+    });
 };
