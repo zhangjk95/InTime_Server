@@ -9,13 +9,13 @@ router.get('/', function(req, res, next) {
     Notification.find({ uid: ObjectId(req.user.uid) }, function(err, notifications) {
         if (err) return next(err);
 
-        return res.json(notifications.map((notification) => ({
+        return res.json({ notifications: notifications.map((notification) => ({
             nid: notification._id,
             type: notification.type,
             message: notification.message,
             details: notification.details,
             read: notification.read
-        })));
+        })) });
     });
 });
 
