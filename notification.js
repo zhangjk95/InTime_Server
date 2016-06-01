@@ -13,6 +13,7 @@ var send = function(uid, nid, type, message, details) {
 
         var gcmMessage = new gcm.Message({
             data: {
+                nid: nid,
                 type: type,
                 message: message,
                 details: details
