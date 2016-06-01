@@ -9,7 +9,7 @@ var User = require(__base + 'models/user');
 router.post('/:uid/reg_tokens/:reg_token', function(req, res, next) {
     var user = req.dbDoc.user;
 
-    user.update({ $push: { reg_tokens: req.params.reg_token }}, function(err) {
+    user.update({ $addToSet: { reg_tokens: req.params.reg_token }}, function(err) {
         if (err) return next(err);
         return res.status(201)
             .header('location', util.format('/users/%s/reg_tokens/%s', req.params.uid, req.params.reg_token))
