@@ -25,7 +25,7 @@ router.put('/all', function(req, res, next) {
         return res.status(400).json({ error: 'Type of "read" must be boolean.' });
     }
 
-    Notification.update({ uid: ObjectId(req.user.uid) }, { read: req.body.read }, function(err) {
+    Notification.update({ uid: ObjectId(req.user.uid) }, { read: req.body.read }, {multi: true}, function(err) {
         if (err) return next(err);
         return res.json({});
     });
