@@ -45,7 +45,7 @@ router.get('/', function(req, res, next) {
 
     Template.find({ uid: req.query.uid }, function(err, templates) {
         if (err) return next(err);
-        return res.json(templates.map((template) => ({
+        return res.json({ templates: templates.map((template) => ({
             tid: template._id,
             type: template.type,
             title: template.title,
@@ -56,7 +56,7 @@ router.get('/', function(req, res, next) {
             place: template.place,
             coordinate: template.coordinate,
             isPrivate: template.isPrivate
-        })));
+        }))});
     });
 });
 
