@@ -33,7 +33,7 @@ router.put('/all', function(req, res, next) {
 
 // PUT /notifications/:nid
 router.put('/:nid', function(req, res, next) {
-    if (!(req.body.read instanceof Boolean)) {
+    if (typeof(req.body.read) !== "boolean") {
         return res.status(400).json({ error: 'Type of "read" must be boolean.' });
     }
 
