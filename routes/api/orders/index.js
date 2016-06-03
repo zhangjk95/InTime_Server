@@ -10,7 +10,7 @@ var sendNotification = require(__base + 'notification');
 // POST /orders
 router.post('/', function(req, res, next) {
     if (!(req.body.type && req.body.title && req.body.content && req.body.category && req.body.coordinate &&
-        req.body.coordinate.latitude && req.body.coordinate.longitude && req.body.isPrivate && req.body.time)) {
+        req.body.coordinate.latitude && req.body.coordinate.longitude && req.body.time)) {
         return res.status(400).json({error: 'Something is empty.'});
     }
     if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "notification") {
@@ -21,6 +21,9 @@ router.post('/', function(req, res, next) {
     }
     if ((req.body.type == "request" || req.body.type == "offer") && (isNaN(req.body.number) || parseInt(req.body.number) <= 0)) {
         return res.status(400).json({ error: 'Number must be a positive integer.' });
+    }
+    if (typeof(req.body.isPrivate) !== "boolean") {
+        return res.status(400).json({ error: 'Type of "isPrivate" must be boolean.' });
     }
 
     var order = new Order({
@@ -257,17 +260,17 @@ router.put('/:oid', function(req, res, next) {
     }
     else {
         if (!(req.body.title && req.body.content && req.body.category && req.body.coordinate &&
-            req.body.coordinate.latitude && req.body.coordinate.longitude && req.body.isPrivate && req.body.time)) {
+            req.body.coordinate.latitude && req.body.coordinate.longitude && req.body.time)) {
             return res.status(400).json({error: 'Something is empty.'});
         }
-        if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "notification") {
-            return res.status(400).json({error: 'Type error.'});
-        }
-        if ((req.body.type == "request" || req.body.type == "offer") && (isNaN(req.body.points) || parseInt(req.body.points) < 0)) {
+        if ((order.type == "request" || order.type == "offer") && (isNaN(req.body.points) || parseInt(req.body.points) < 0)) {
             return res.status(400).json({ error: 'Points must be a non-negative integer.' });
         }
-        if ((req.body.type == "request" || req.body.type == "offer") && (isNaN(req.body.number) || parseInt(req.body.number) <= 0)) {
+        if ((order.type == "request" || order.type == "offer") && (isNaN(req.body.number) || parseInt(req.body.number) <= 0)) {
             return res.status(400).json({ error: 'Number must be a positive integer.' });
+        }
+        if (typeof(req.body.isPrivate) !== "boolean") {
+            return res.status(400).json({ error: 'Type of "isPrivate" must be boolean.' });
         }
 
         var origPoints = order.points * order.number;
@@ -275,7 +278,7 @@ router.put('/:oid', function(req, res, next) {
 
         order.isPrivate = req.body.isPrivate;
 
-        if (req.body.type == "request" || req.body.type == "offer") {
+        if (order.type == "request" || order.type == "offer") {
             if (req.body.number < acceptUsers.length) {
                 return res.status(422).json({error: "Number must greater or equal than number of accepted users."});
             }
@@ -296,7 +299,7 @@ router.put('/:oid', function(req, res, next) {
             };
             order.time = req.body.time;
 
-            if (req.body.type == "request" || req.body.type == "offer") {
+            if (order.type == "request" || order.type == "offer") {
                 order.points = req.body.points;
             }
         }
