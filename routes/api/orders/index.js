@@ -111,7 +111,7 @@ router.get('/', function(req, res, next) {
 
             Order.find(condition, function(err, orders) {
                 if (err) return next(err);
-                return res.json(orders.map((order) => ({
+                return res.json({ orders: orders.map((order) => ({
                     oid: order._id,
                     uid: order.uid,
                     type: order.type,
@@ -126,7 +126,7 @@ router.get('/', function(req, res, next) {
                     time: order.time,
                     accept_users: order.accept_users,
                     status: order.status
-                })));
+                })) });
             })
         });
     }
