@@ -6,7 +6,7 @@ var Template = require(__base + 'models/template');
 
 // POST /templates
 router.post('/', function(req, res, next) {
-    if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "notification") {
+    if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "prompt") {
         return res.status(400).json({ error: 'Type error.' });
     }
     else if (!req.body.title) {
@@ -100,7 +100,7 @@ router.get('/:tid', function(req, res, next) {
 router.put('/:tid', function(req, res, next) {
     var template = req.dbDoc.template;
 
-    if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "notification") {
+    if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "prompt") {
         return res.status(400).json({ error: 'Type error.' });
     }
     else if (!req.body.title) {

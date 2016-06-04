@@ -18,7 +18,7 @@ router.post('/:oid/accept_users/:uid', function(req, res, next) {
     else if (order.uid == req.user.uid) {
         return res.status(422).json({ error: 'Cannot accept your own order.' });
     }
-    else if (order.type == 'notification' || order.status != 'waiting') {
+    else if (order.type == 'prompt' || order.status != 'waiting') {
         return res.status(422).json({ error: 'Cannot accept this order.' });
     }
 

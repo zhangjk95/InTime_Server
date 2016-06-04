@@ -13,7 +13,7 @@ router.post('/', function(req, res, next) {
         req.body.coordinate.latitude && req.body.coordinate.longitude && req.body.time)) {
         return res.status(400).json({error: 'Something is empty.'});
     }
-    if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "notification") {
+    if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "prompt") {
         return res.status(400).json({ error: 'Type error.' });
     }
     if ((req.body.type == "request" || req.body.type == "offer") && (isNaN(req.body.points) || parseInt(req.body.points) < 0)) {
@@ -214,7 +214,7 @@ router.put('/:oid', function(req, res, next) {
         var acceptUsers = order.accept_users.filter((acceptUser) => acceptUser.status == 'accepted' || acceptUser.status == 'canceling');
 
         if (req.body.status == 'cancel' && (order.status == 'waiting' || order.status == 'accepted')) {
-            if (order.type == 'offer' || order.type == 'notification' || order.type == 'request' && !order.accept_users.some((acceptUser) => acceptUser.status == 'accepted' || acceptUser.status == 'canceling')) {
+            if (order.type == 'offer' || order.type == 'prompt' || order.type == 'request' && !order.accept_users.some((acceptUser) => acceptUser.status == 'accepted' || acceptUser.status == 'canceling')) {
                 order.status = 'canceled';
 
                 acceptUsers.forEach((acceptUser) => {
