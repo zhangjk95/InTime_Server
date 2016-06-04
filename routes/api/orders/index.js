@@ -109,24 +109,31 @@ router.get('/', function(req, res, next) {
                 { isPrivate: false }
             ];
 
-            Order.find(condition, function(err, orders) {
+            Order.aggregate([
+                { $match: condition },
+                { $lookup: { from: "users", localField: "uid", foreignField: "_id", as: "userInfo" }},
+                { $unwind: '$userInfo' },
+                { $project: {
+                    _id: false,
+                    oid: "$_id",
+                    uid: true,
+                    username: "$userInfo.username",
+                    type: true,
+                    title: true,
+                    content: true,
+                    category: true,
+                    points: true,
+                    number: true,
+                    place: true,
+                    coordinate: true,
+                    isPrivate: true,
+                    time: true,
+                    accept_users: true,
+                    status: true
+                }}
+            ], function(err, orders) {
                 if (err) return next(err);
-                return res.json({ orders: orders.map((order) => ({
-                    oid: order._id,
-                    uid: order.uid,
-                    type: order.type,
-                    title: order.title,
-                    content: order.content,
-                    category: order.category,
-                    points: order.points,
-                    number: order.number,
-                    place: order.place,
-                    coordinate: order.coordinate,
-                    isPrivate: order.isPrivate,
-                    time: order.time,
-                    accept_users: order.accept_users,
-                    status: order.status
-                })) });
+                return res.json({ orders: orders });
             })
         });
     }
@@ -167,21 +174,31 @@ router.use('/:oid', function(req, res, next) {
 router.get('/:oid', function(req, res, next) {
     var order = req.dbDoc.order;
 
-    return res.json({
-        tid: order._id,
-        uid: order.uid,
-        type: order.type,
-        title: order.title,
-        content: order.content,
-        category: order.category,
-        points: order.points,
-        number: order.number,
-        place: order.place,
-        coordinate: order.coordinate,
-        isPrivate: order.isPrivate,
-        time: order.time,
-        accept_users: order.accept_users,
-        status: order.status
+    Order.aggregate([
+        { $match: { _id: ObjectId(req.params.oid) } },
+        { $unwind: '$accept_users' },
+        { $lookup: { from: "users", localField: "accept_users.uid", foreignField: "_id", as: "userInfo" }},
+        { $unwind: '$userInfo' },
+        { $project: { _id: false, uid: "$_id", username: "$userInfo.username", status: true }}
+    ], function (err, accept_users) {
+        if (err) return next(err);
+
+        return res.json({
+            tid: order._id,
+            uid: order.uid,
+            type: order.type,
+            title: order.title,
+            content: order.content,
+            category: order.category,
+            points: order.points,
+            number: order.number,
+            place: order.place,
+            coordinate: order.coordinate,
+            isPrivate: order.isPrivate,
+            time: order.time,
+            accept_users: accept_users,
+            status: order.status
+        });
     });
 });
 
