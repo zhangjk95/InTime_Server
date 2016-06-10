@@ -157,7 +157,7 @@ router.use('/:oid', function(req, res, next) {
             }
             else {
                 User.findOne({ _id: ObjectId(req.user.uid) }, function (err, user) {
-                    if (user.friends.some((friend) => friend.uid == order.uid)) {
+                    if (user.friends.some((friend) => friend.uid.equals(order.uid) && friend.status == "accepted")) {
                         req.dbDoc.order = order;
                         next();
                     }
