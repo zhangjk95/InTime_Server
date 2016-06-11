@@ -176,7 +176,7 @@ router.get('/:oid', function(req, res, next) {
         { $unwind: '$accept_users' },
         { $lookup: { from: "users", localField: "accept_users.uid", foreignField: "_id", as: "userInfo" }},
         { $unwind: '$userInfo' },
-        { $project: { _id: false, uid: "$_id", username: "$userInfo.username", status: true }}
+        { $project: { _id: false, uid: "$userInfo._id", username: "$userInfo.username", status: true }}
     ], function (err, accept_users) {
         if (err) return next(err);
 
