@@ -151,21 +151,18 @@ router.use('/:oid', function(req, res, next) {
             return res.status(404).json({error: 'Order not found.'})
         }
         else {
-            if (order.isPrivate == false || order.uid == req.user.uid || order.accept_users.some((acceptUser) => acceptUser.uid == req.user.uid)) {
-                req.dbDoc.order = order;
-                next();
-            }
-            else {
-                User.findOne({ _id: ObjectId(req.user.uid) }, function (err, user) {
-                    if (user.friends.some((friend) => friend.uid.equals(order.uid) && friend.status == "accepted")) {
-                        req.dbDoc.order = order;
-                        next();
-                    }
-                    else {
-                        return res.status(403).json({ error: 'Permission denied.' });
-                    }
-                });
-            }
+            User.findOne({ _id: ObjectId(order.uid) }, function (err, user) {
+                if (order.isPrivate == false || order.uid == req.user.uid || order.accept_users.some((acceptUser) => acceptUser.uid == req.user.uid)
+                    || user.friends.some((friend) => friend.uid.equals(req.user.uid) && friend.status == "accepted"))
+                {
+                    order.username = user.username;
+                    req.dbDoc.order = order;
+                    next();
+                }
+                else {
+                    return res.status(403).json({ error: 'Permission denied.' });
+                }
+            });
         }
     });
 });
@@ -186,6 +183,7 @@ router.get('/:oid', function(req, res, next) {
         return res.json({
             tid: order._id,
             uid: order.uid,
+            username: order.username,
             type: order.type,
             title: order.title,
             content: order.content,
