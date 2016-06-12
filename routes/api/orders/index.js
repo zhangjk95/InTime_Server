@@ -80,7 +80,7 @@ router.post('/', function(req, res, next) {
 router.get('/', function(req, res, next) {
     var condition = {};
 
-    if (req.query.uid == req.user.uid || req.query.accept_users_contains == req.user.uid || req.query.status == 'waiting') {
+    if (req.query.uid == req.user.uid || req.query.accept_users_contains == req.user.uid || 'waiting'.match(req.query.status)) {
         if (req.query.uid) {
             condition['uid'] = ObjectId(req.query.uid);
         }
@@ -88,8 +88,8 @@ router.get('/', function(req, res, next) {
             condition['accept_users'] = { $elemMatch: { uid: ObjectId(req.query.accept_users_contains) }};
         }
         if (req.query.status) {
-            condition['status'] = req.query.status;
-            if (req.query.status == 'waiting') {
+            condition['status'] = { $regex: req.query.status };
+            if ('waiting'.match(req.query.status) && !(req.query.uid == req.user.uid || req.query.accept_users_contains == req.user.uid)) {
                 condition['time'] = { $gte: new Date() };
             }
         }
