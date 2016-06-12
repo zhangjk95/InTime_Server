@@ -186,7 +186,23 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
         }
     }
     else if (req.body.status == 'accepted') {
-        if (acceptUser.uid == req.user.uid) {
+        if (order.uid == req.user.uid) {
+            if (acceptUser.status == 'canceling') {
+                acceptUser.status = 'accepted';
+                modifyStatus(order);
+                order.update({ status: order.status, accept_users: order.accept_users }, function (err) {
+                    if (err) return next(err);
+
+                    sendNotification(acceptUser.uid, 'order', 'Someone has denied to cancel the offer you accepted.', { oid: order._id });
+
+                    return res.json({status: "accepted"});
+                });
+            }
+            else {
+                return res.status(403).json({ error: "Status cannot be modified." });
+            }
+        }
+        else if (acceptUser.uid == req.user.uid) {
             if (acceptUser.status == 'canceling') {
                 acceptUser.status = 'accepted';
                 modifyStatus(order);
