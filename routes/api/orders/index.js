@@ -291,6 +291,7 @@ router.put('/:oid', function(req, res, next) {
         var origPoints = order.points * order.number;
         var acceptUsers = order.accept_users.filter((acceptUser) => acceptUser.status != 'canceled');
 
+        order.time = req.body.time;
         order.isPrivate = req.body.isPrivate;
 
         if (order.type == "request" || order.type == "offer") {
@@ -312,7 +313,6 @@ router.put('/:oid', function(req, res, next) {
                 latitude: req.body.coordinate.latitude,
                 longitude: req.body.coordinate.longitude
             };
-            order.time = req.body.time;
 
             if (order.type == "request" || order.type == "offer") {
                 order.points = req.body.points;
