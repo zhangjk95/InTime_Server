@@ -80,7 +80,7 @@ router.post('/', function(req, res, next) {
 router.get('/', function(req, res, next) {
     var condition = {};
 
-    if (req.query.uid == req.user.uid || req.query.accept_users_contains == req.user.uid || 'waiting'.match(req.query.status)) {
+    if (req.query.uid == req.user.uid || req.query.accept_users_contains == req.user.uid || (req.query.status == 'waiting' && req.query.time_gte_now == 'true')) {
         if (req.query.uid) {
             condition['uid'] = ObjectId(req.query.uid);
         }
@@ -89,9 +89,9 @@ router.get('/', function(req, res, next) {
         }
         if (req.query.status) {
             condition['status'] = { $regex: req.query.status };
-            if ('waiting'.match(req.query.status) && !(req.query.uid == req.user.uid || req.query.accept_users_contains == req.user.uid)) {
-                condition['time'] = { $gte: new Date() };
-            }
+        }
+        if (req.query.time_gte_now == 'true') {
+            condition['time'] = { $gte: new Date() };
         }
         if (req.query.title_or_content_like) {
             condition['$and'] = req.query.title_or_content_like.split(/\s+/).map((keyword) => ({ $or: [
