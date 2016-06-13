@@ -304,7 +304,7 @@ router.put('/:oid', function(req, res, next) {
             }
         }
 
-        if (!acceptUsers) {
+        if (acceptUsers.length == 0) {
             order.title = req.body.title;
             order.content = req.body.content;
             order.category = req.body.category;
