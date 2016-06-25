@@ -104,7 +104,7 @@ router.get('/', function(req, res, next) {
             if (err) return next(err);
 
             condition['$or'] = [
-                { uid: { $in: user.friends.map((friend) => ObjectId(friend.uid)) }, isPrivate: true },
+                { uid: { $in: user.friends.filter((friend) => friend.status == 'accepted').map((friend) => ObjectId(friend.uid)) }, isPrivate: true },
                 { uid: ObjectId(req.user.uid), isPrivate: true },
                 { isPrivate: false }
             ];
