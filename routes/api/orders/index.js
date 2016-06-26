@@ -85,7 +85,7 @@ router.get('/', function(req, res, next) {
             condition['uid'] = ObjectId(req.query.uid);
         }
         if (req.query.accept_users_contains) {
-            condition['accept_users'] = { $elemMatch: { uid: ObjectId(req.query.accept_users_contains) }};
+            condition['accept_users'] = { $elemMatch: { uid: ObjectId(req.query.accept_users_contains), $not: { status: "canceled" } }};
         }
         if (req.query.status) {
             condition['status'] = { $regex: req.query.status };
