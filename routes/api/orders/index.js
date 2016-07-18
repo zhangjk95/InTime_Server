@@ -227,22 +227,37 @@ router.put('/:oid', function(req, res, next) {
 
                 acceptUsers.forEach((acceptUser) => {
                     acceptUser.status = 'canceled';
-                    sendNotification(acceptUser.uid, 'order', 'Someone has canceled the offer you accepted.', { oid: order._id });
+                    sendNotification(acceptUser.uid, 'order', 'Someone has canceled the order you accepted.', { oid: order._id });
                 });
 
                 order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                     if (err) return next(err);
 
                     if (order.type == 'request') {
-                        User.update({ _id: ObjectId(order.uid) }, { $inc: { balance: order.points * order.number }}, function(err) {
-                            if (err) return next(err);
-                            return res.json({ status : 'canceled' });
+                        createTransaction(order.uid, order.points * order.number, 'order/cancel', {
+                            oid: order._id,
+                            points: order.points,
+                            number: order.number
+                        })
+                        .then(function () {
+                            res.json({ status : 'canceled' });
+                        })
+                        .catch(function (err) {
+                            next(err);
                         });
                     }
                     else if (order.type == 'offer') {
-                        User.update({ _id: { $in: acceptUsers.map((acceptUser) => ObjectId(acceptUser.uid)) } }, { $inc: { balance: order.points }}, function(err) {
-                            if (err) return next(err);
-                            return res.json({ status : 'canceled' });
+                        Promise.all(
+                            acceptUsers.map((acceptUser) => createTransaction(acceptUser.uid, order.points, 'order/leave', {
+                                oid: order._id,
+                                points: order.points
+                            }))
+                        )
+                        .then(function () {
+                            res.json({ status : 'canceled' });
+                        })
+                        .catch(function (err) {
+                            next(err);
                         });
                     }
                     else {
@@ -273,9 +288,17 @@ router.put('/:oid', function(req, res, next) {
             order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                 if (err) return next(err);
 
-                User.update({ _id: { $in: acceptUsers.map((acceptUser) => ObjectId(acceptUser.uid)) } }, { $inc: { balance: order.points }}, function(err) {
-                    if (err) return next(err);
-                    return res.json({ status : 'completed' });
+                Promise.all(
+                    acceptUsers.map((acceptUser) => createTransaction(acceptUser.uid, order.points, 'order/request_complete', {
+                        oid: order._id,
+                        points: order.points
+                    }))
+                )
+                .then(function () {
+                    res.json({ status : 'completed' });
+                })
+                .catch(function (err) {
+                    next(err);
                 });
             });
         }
@@ -331,28 +354,36 @@ router.put('/:oid', function(req, res, next) {
 
         var delta = order.points * order.number - origPoints;
 
-        var save = function() {
-            order.save(function (err) {
-                if (err) return next(err);
-                return res.json({});
-            });
-        };
-
-        if (order.type == "request" && delta != 0) {
-            User.findOneAndUpdate({ _id: ObjectId(order.uid), balance: { $gte: delta } }, { $inc: { balance: -delta } }, function (err, result) {
-                if (err) return next(err);
-
-                if (result) {
-                    save();
-                }
-                else {
-                    return res.status(403).json({ error: 'Insufficient balance.' });
-                }
-            });
-        }
-        else {
-            save();
-        }
+        new Promise(function (resolve, reject) {
+            if (order.type == "request") {
+                createTransaction(order.uid, -delta, 'order/modify', {
+                    oid: order._id,
+                    points: order.points,
+                    number: order.number
+                })
+                .then(function () {
+                    resolve();
+                })
+                .catch(function (err) {
+                    if (err instanceof TransactionError) {
+                        res.status(403).json({error: 'Insufficient balance.'});
+                        reject();
+                    }
+                });
+            }
+            else {
+                resolve();
+            }
+        })
+        .then(function () {
+            return order.save();
+        })
+        .then(function () {
+            return res.json({});
+        })
+        .catch(function (err) {
+            if (err) next(err);
+        });
     }
 });
 

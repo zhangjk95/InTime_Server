@@ -7,6 +7,8 @@ var Order = require(__base + 'models/order');
 var User = require(__base + 'models/user');
 var modifyStatus = require('./modifyStatus');
 var sendNotification = require(__base + 'notification');
+var createTransaction = require(__base + 'transaction').createTransaction;
+var TransactionError = require(__base + 'transaction').TransactionError;
 
 // POST /orders/:oid/accept_users/:uid
 router.post('/:oid/accept_users/:uid', function(req, res, next) {
@@ -24,12 +26,36 @@ router.post('/:oid/accept_users/:uid', function(req, res, next) {
 
     var acceptUser = order.accept_users.filter((acceptUser) => acceptUser.uid == req.params.uid)[0];
 
-    var addAcceptUser = function() {
+    if (acceptUser && acceptUser.status != 'canceled') {
+        return res.status(409).json({ error: 'Order already accepted.' });
+    }
+
+    new Promise(function (resolve, reject) {
+        if (order.type == 'offer') {
+            createTransaction(order.uid, -order.points, 'order/accept', {
+                oid: order._id,
+                points: order.points,
+            })
+            .then(function () {
+                resolve();
+            })
+            .catch(function (err) {
+                if (err instanceof TransactionError) {
+                    res.status(403).json({error: 'Insufficient balance.'});
+                    reject();
+                }
+            });
+        }
+        else {
+            resolve();
+        }
+    })
+    .then(function () {
         if (acceptUser == null) {
             order.accept_users.push({ uid: ObjectId(req.params.uid), status: 'accepted' });
             modifyStatus(order);
             order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
-                if (err) return next(err);
+                if (err) return Promise.reject(err);
 
                 sendNotification(order.uid, 'order', util.format('Someone has accepted your %s.', order.type), { oid: order._id });
 
@@ -42,33 +68,19 @@ router.post('/:oid/accept_users/:uid', function(req, res, next) {
             acceptUser.status = 'accepted';
             modifyStatus(order);
             order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
-                if (err) return next(err);
+                if (err) return Promise.reject(err);
 
                 sendNotification(order.uid, 'order', util.format('Someone has accepted your %s.', order.type), { oid: order._id });
 
                 return res.json({ status: "accepted" });
             });
         }
-        else {
-            return res.status(409).json({ error: 'Order already accepted.' });
-        }
-    };
+    })
+    .catch(function (err) {
+        if (err) next(err);
+    });
 
-    if (order.type == 'offer' && order.points != 0) {
-        User.findOneAndUpdate({ _id: ObjectId(req.params.uid), balance: { $gte: order.points } }, { $inc: { balance: -order.points } }, function (err, result) {
-            if (err) return next(err);
 
-            if (result) {
-                addAcceptUser();
-            }
-            else {
-                return res.status(403).json({ error: 'Insufficient balance.' });
-            }
-        });
-    }
-    else {
-        addAcceptUser();
-    }
 });
 
 // PUT /orders/:oid/accept_users/:uid
@@ -102,15 +114,16 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
 
                     sendNotification(acceptUser.uid, 'order', 'Someone has canceled the offer you accepted.', { oid: order._id });
 
-                    if (order.points != 0) {
-                        User.update({ _id: ObjectId(acceptUser.uid) }, { $inc: { balance: order.points }}, function(err) {
-                            if (err) return next(err);
-                            return res.json({ status : 'canceled' });
-                        });
-                    }
-                    else {
-                        return res.json({ status: "canceled" });
-                    }
+                    createTransaction(acceptUser.uid, order.points, 'order/leave', {
+                        oid: order._id,
+                        points: order.points
+                    })
+                    .then(function () {
+                        res.json({ status : 'canceled' });
+                    })
+                    .catch(function (err) {
+                        next(err);
+                    });
                 });
             }
             else {
@@ -126,10 +139,17 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
 
                     sendNotification(order.uid, 'order', 'Someone has canceled your request.', { oid: order._id });
 
-                    if (order.status == 'canceled' && order.points != 0) {
-                        User.update({ _id: ObjectId(order.uid) }, { $inc: { balance: order.points * order.number }}, function(err) {
-                            if (err) return next(err);
-                            return res.json({ status : 'canceled' });
+                    if (order.status == 'canceled') {
+                        createTransaction(order.uid, order.points * order.number, 'order/cancel', {
+                            oid: order._id,
+                            points: order.points,
+                            number: order.number
+                        })
+                        .then(function () {
+                            res.json({ status : 'canceled' });
+                        })
+                        .catch(function (err) {
+                            next(err);
                         });
                     }
                     else {
@@ -164,17 +184,18 @@ router.put('/:oid/accept_users/:uid', function(req, res, next) {
                 order.update({ status: order.status, accept_users: order.accept_users }, function(err) {
                     if (err) return next(err);
 
-                    sendNotification(order.uid, 'order', 'Your offer to someone is completed', { oid: order._id });
+                    sendNotification(order.uid, 'order', 'Your offer is completed.', { oid: order._id });
 
-                    if (order.points != 0) {
-                        User.update({ _id: ObjectId(order.uid) }, { $inc: { balance: order.points }}, function(err) {
-                            if (err) return next(err);
-                            return res.json({ status : 'completed' });
-                        });
-                    }
-                    else {
-                        return res.json({ status: "completed" });
-                    }
+                    createTransaction(order.uid, order.points, 'order/offer_complete', {
+                        oid: order._id,
+                        points: order.points
+                    })
+                    .then(function () {
+                        res.json({ status : 'completed' });
+                    })
+                    .catch(function (err) {
+                        next(err);
+                    });
                 });
             }
             else {
