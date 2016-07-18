@@ -1,5 +1,7 @@
 var router = require('express').Router();
 
+var createTransaction = require(__base + 'transaction').createTransaction;
+
 var validatePromotionCode = function(code) {
     if (code == 'SpectralTiger') {
         return 5000;
@@ -14,9 +16,12 @@ router.post('/:uid/balance/promotion/:promotion_code', function(req, res, next) 
 
     var increment = validatePromotionCode(req.params.promotion_code);
     if (increment > 0) {
-        user.update({ $inc: { balance: increment } }, function(err) {
-            if (err) return next(err);
+        createTransaction(user._id, increment, "balance/promotion")
+        .then(function (id) {
             return res.json({ increment: increment, balance: user.balance + increment });
+        })
+        .catch(function (err) {
+            return next(err);
         });
     }
     else {

@@ -6,6 +6,8 @@ var Order = require(__base + 'models/order');
 var User = require(__base + 'models/user');
 var modifyStatus = require('./modifyStatus');
 var sendNotification = require(__base + 'notification');
+var createTransaction = require(__base + 'transaction').createTransaction;
+var TransactionError = require(__base + 'transaction').TransactionError;
 
 // POST /orders
 router.post('/', function(req, res, next) {
@@ -48,32 +50,40 @@ router.post('/', function(req, res, next) {
         order.number = parseInt(req.body.number);
     }
 
-    var save = function() {
-        order.save(function (err) {
-            if (err) return next(err);
+    new Promise(function (resolve, reject) {
+        if (order.type == "request") {
+            var decrement = order.points * order.number;
 
-            return res.status(201)
-                .header("location", "/api/order/" + order._id)
-                .json({oid: order._id, status: "waiting"});
-        });
-    };
-
-    if (order.type == "request" && order.points > 0) {
-        var decrement = order.points * order.number;
-        User.findOneAndUpdate({ _id: ObjectId(order.uid), balance: { $gte: decrement } }, { $inc: { balance: -decrement } }, function (err, result) {
-            if (err) return next(err);
-
-            if (result) {
-                save();
-            }
-            else {
-                return res.status(403).json({ error: 'Insufficient balance.' });
-            }
-        });
-    }
-    else {
-        save();
-    }
+            createTransaction(order.uid, -decrement, 'order/create', {
+                oid: order._id,
+                points: order.points,
+                number: order.number
+            })
+            .then(function () {
+                resolve();
+            })
+            .catch(function (err) {
+                if (err instanceof TransactionError) {
+                    res.status(403).json({error: 'Insufficient balance.'});
+                    reject();
+                }
+            });
+        }
+        else {
+            resolve();
+        }
+    })
+    .then(function () {
+        return order.save();
+    })
+    .then(function () {
+        res.status(201)
+            .header("location", "/api/order/" + order._id)
+            .json({oid: order._id, status: "waiting"});
+    })
+    .catch(function (err) {
+        if (err) next(err);
+    });
 });
 
 // GET /orders
