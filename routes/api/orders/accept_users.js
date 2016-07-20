@@ -32,7 +32,7 @@ router.post('/:oid/accept_users/:uid', function(req, res, next) {
 
     new Promise(function (resolve, reject) {
         if (order.type == 'offer') {
-            createTransaction(order.uid, -order.points, 'order/accept', {
+            createTransaction(req.user.uid, -order.points, 'order/accept', {
                 oid: order._id,
                 points: order.points,
             })
