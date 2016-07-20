@@ -60,7 +60,7 @@ router.use('/:uid', function(req, res, next) {
             return res.status(404).json({ error: 'User does not exist.' })
         }
         else {
-            req.dbDoc.user = user;
+            res.locals.user = user;
             next();
         }
     });
@@ -68,7 +68,7 @@ router.use('/:uid', function(req, res, next) {
 
 // GET /users/:uid
 router.get('/:uid', function(req, res, next) {
-    var user = req.dbDoc.user;
+    var user = res.locals.user;
     
     if (req.user && req.params.uid == req.user.uid) {
         return res.json({ username: user.username, phone: user.phone, email: user.email, balance: user.balance });
@@ -85,7 +85,7 @@ router.use('/:uid', require('./verifyUserPermission'));
 
 // PUT /users/:uid
 router.put('/:uid', function(req, res, next) {
-    var user = req.dbDoc.user;
+    var user = res.locals.user;
     
     if (!req.body.username) {
         return res.status(400).json({ error: 'Username is empty.' });

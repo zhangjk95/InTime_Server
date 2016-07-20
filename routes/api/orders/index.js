@@ -166,7 +166,7 @@ router.use('/:oid', function(req, res, next) {
                     || user.friends.some((friend) => friend.uid.equals(req.user.uid) && friend.status == "accepted"))
                 {
                     order.username = user.username;
-                    req.dbDoc.order = order;
+                    res.locals.order = order;
                     next();
                 }
                 else {
@@ -179,7 +179,7 @@ router.use('/:oid', function(req, res, next) {
 
 // GET /orders/:oid
 router.get('/:oid', function(req, res, next) {
-    var order = req.dbDoc.order;
+    var order = res.locals.order;
 
     Order.aggregate([
         { $match: { _id: ObjectId(req.params.oid) } },
@@ -212,7 +212,7 @@ router.get('/:oid', function(req, res, next) {
 
 // PUT /orders/:oid
 router.put('/:oid', function(req, res, next) {
-    var order = req.dbDoc.order;
+    var order = res.locals.order;
 
     if (order.uid != req.user.uid) {
         return res.status(403).json({ error: 'Permission denied.' });

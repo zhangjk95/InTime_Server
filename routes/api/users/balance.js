@@ -12,7 +12,7 @@ var validatePromotionCode = function(code) {
 };
 
 router.post('/:uid/balance/promotion/:promotion_code', function(req, res, next) {
-    var user = req.dbDoc.user;
+    var user = res.locals.user;
 
     var increment = validatePromotionCode(req.params.promotion_code);
     if (increment > 0) {

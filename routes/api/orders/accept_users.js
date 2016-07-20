@@ -12,7 +12,7 @@ var TransactionError = require(__base + 'transaction').TransactionError;
 
 // POST /orders/:oid/accept_users/:uid
 router.post('/:oid/accept_users/:uid', function(req, res, next) {
-    var order = req.dbDoc.order;
+    var order = res.locals.order;
 
     if (req.params.uid != req.user.uid) {
         return res.status(403).json({ error: 'Permission denied.' });
@@ -85,7 +85,7 @@ router.post('/:oid/accept_users/:uid', function(req, res, next) {
 
 // PUT /orders/:oid/accept_users/:uid
 router.put('/:oid/accept_users/:uid', function(req, res, next) {
-    var order = req.dbDoc.order;
+    var order = res.locals.order;
 
     var acceptUser = order.accept_users.filter((acceptUser) => acceptUser.uid == req.params.uid)[0];
     

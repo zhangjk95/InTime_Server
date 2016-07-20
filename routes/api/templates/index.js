@@ -72,7 +72,7 @@ router.use('/:tid', function(req, res, next) {
             return res.status(403).json({error: 'Permission denied.'});
         }
         else {
-            req.dbDoc.template = template;
+            res.locals.template = template;
             next();
         }
     });
@@ -80,7 +80,7 @@ router.use('/:tid', function(req, res, next) {
 
 // GET /templates/:tid
 router.get('/:tid', function(req, res, next) {
-    var template = req.dbDoc.template;
+    var template = res.locals.template;
 
     return res.json({
         tid: template._id,
@@ -98,7 +98,7 @@ router.get('/:tid', function(req, res, next) {
 
 // PUT /templates/:tid
 router.put('/:tid', function(req, res, next) {
-    var template = req.dbDoc.template;
+    var template = res.locals.template;
 
     if (req.body.type != "request" && req.body.type != "offer" && req.body.type != "prompt") {
         return res.status(400).json({ error: 'Type error.' });
@@ -130,7 +130,7 @@ router.put('/:tid', function(req, res, next) {
 
 // DELETE /templates/:tid
 router.delete('/:tid', function(req, res, next) {
-    var template = req.dbDoc.template;
+    var template = res.locals.template;
 
     template.remove(function(err) {
         if (err) return next(err);
