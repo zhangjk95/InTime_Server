@@ -1,6 +1,6 @@
 <h1>test</h1>
 <ul>
 <% transactions.forEach(function (transaction) { %>
-    <li><a href="/activities/order_detail?oid=<%=transaction.details.oid%>"><%=transaction.type%></a></li>
+    <li><a href="<%=transaction.href%>"><%=transaction.type%></a></li>
 <% }); %>
 </ul>
