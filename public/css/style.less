@@ -51,6 +51,7 @@ a {
             .transaction-item-type {
                 display: inline-block;
                 margin-top: 4px;
+                margin-right: 5px;
                 padding: 4px 6px;
                 border-radius: 5px;
                 text-transform: capitalize;
@@ -60,6 +61,11 @@ a {
 
             .transaction-item-title {
                 display: inline-block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                width: 120px;
+                white-space: nowrap;
+                vertical-align: middle;
             }
         }
 
