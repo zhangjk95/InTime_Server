@@ -14,7 +14,7 @@ router.get('/', function(req, res, next) {
                     transaction.title = transaction.order.title;
                     break;
                 default:
-                    transaction.href = '#';
+                    transaction.href = 'javascript:;';
                     transaction.title = '';
                     break;
             }
