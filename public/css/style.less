@@ -20,11 +20,16 @@ a {
 }
 
 .transaction-item {
-    padding: 15px 20px;
     border-bottom: 1px solid lightgrey;
 
     a {
         display: block;
+        padding: 15px 20px;
+        -webkit-tap-highlight-color:  rgba(255, 255, 255, 0);
+
+        &:active {
+            background-color: #eee;
+        }
 
         .large-icon {
             position: relative;
