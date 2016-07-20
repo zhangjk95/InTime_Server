@@ -1,10 +1,5 @@
 var router = require('express').Router();
 
-router.use(function(req, res, next) {
-    req.dbDoc = {};
-    next();
-});
-
 router.use('/users', require('./users'));
 router.use('/login', require('./login'));
 
@@ -17,5 +12,6 @@ router.use(require('./verifyToken'));
 router.use('/orders', require('./orders'));
 router.use('/templates', require('./templates'));
 router.use('/notifications', require('./notifications'));
+router.use('/transactions', require('./transactions'));
 
 module.exports = router;

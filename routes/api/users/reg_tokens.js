@@ -7,7 +7,7 @@ var User = require(__base + 'models/user');
 
 // POST /users/:uid/reg_tokens/:reg_token
 router.post('/:uid/reg_tokens/:reg_token', function(req, res, next) {
-    var user = req.dbDoc.user;
+    var user = res.locals.user;
 
     user.update({ $addToSet: { reg_tokens: req.params.reg_token }}, function(err) {
         if (err) return next(err);

@@ -20,7 +20,7 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-//app.use(require('less-middleware')(path.join(__dirname, 'public')));
+app.use(require('less-middleware')(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 global.__base = __dirname + '/';
@@ -31,6 +31,7 @@ mongoose.connect(config.database);
 
 //routes
 app.use('/api', require('./routes/api'));
+app.use('/webview', require('./routes/webview'));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

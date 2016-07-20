@@ -8,5 +8,6 @@ module.exports = mongoose.model('User', new Schema({
     email: String,
     balance: Number,
     friends: Array,
-    reg_tokens: Array
+    reg_tokens: Array,
+    transactions: Array
 }));

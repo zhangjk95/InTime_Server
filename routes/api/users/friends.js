@@ -29,7 +29,7 @@ router.use('/:uid/friends/:friend_uid', function(req, res, next) {
             return res.status(422).json({ error: 'Friend user does not exist.' })
         }
         else {
-            req.dbDoc.friendUser = friendUser;
+            res.locals.friendUser = friendUser;
             next();
         }
     });
@@ -37,8 +37,8 @@ router.use('/:uid/friends/:friend_uid', function(req, res, next) {
 
 // POST /users/:uid/friends/:friend_uid
 router.post('/:uid/friends/:friend_uid', function(req, res, next) {
-    var user = req.dbDoc.user;
-    var friendUser = req.dbDoc.friendUser;
+    var user = res.locals.user;
+    var friendUser = res.locals.friendUser;
 
     if (friendUser.uid == req.user.uid) {
         return res.status(422).json({ error: 'You cannot add yourself as a friend.' });
@@ -83,8 +83,8 @@ router.post('/:uid/friends/:friend_uid', function(req, res, next) {
 
 // DELETE /users/:uid/friends/:friend_uid
 router.delete('/:uid/friends/:friend_uid', function(req, res, next) {
-    var user = req.dbDoc.user;
-    var friendUser = req.dbDoc.friendUser;
+    var user = res.locals.user;
+    var friendUser = res.locals.friendUser;
 
     var friend = user.friends.filter((friend) => friend.uid == req.params.friend_uid)[0];
     if (friend == null) {
