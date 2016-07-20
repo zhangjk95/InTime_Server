@@ -1,0 +1,79 @@
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif
+}
+
+ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+a {
+    text-decoration: none;
+    color: black;
+}
+
+.clear {
+    clear: both;
+}
+
+.transaction-item {
+    padding: 15px 20px;
+    border-bottom: 1px solid lightgrey;
+
+    a {
+        display: block;
+
+        .large-icon {
+            position: relative;
+            top: 4px;
+            float: left;
+            width: 40px;
+            margin-right: 15px;
+        }
+
+        .small-icon {
+            position: relative;
+            top: 11px;
+            float: left;
+            width: 40px;
+            margin-left: -50px;
+        }
+
+        .transaction-item-text {
+            display: inline-block;
+
+            .transaction-item-date {
+                color: grey;
+            }
+
+            .transaction-item-type {
+                display: inline-block;
+                margin-top: 4px;
+                padding: 4px 6px;
+                border-radius: 5px;
+                text-transform: capitalize;
+                color: #777;
+                background-color: #eee;
+            }
+
+            .transaction-item-title {
+                display: inline-block;
+            }
+        }
+
+        .transaction-item-total {
+            float: right;
+            font-size: 22px;
+
+            &.plus {
+                color: #ff4040;
+            }
+
+            &.minus {
+                color: #00a900;
+            }
+        }
+    }
+}

@@ -1,6 +1,33 @@
-<h1>test</h1>
-<ul>
-<% transactions.forEach(function (transaction) { %>
-    <li><a href="<%=transaction.href%>"><%=transaction.type%></a></li>
-<% }); %>
-</ul>
+<!DOCTYPE html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <title>Transactions</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <ul>
+    <% transactions.forEach(function (transaction) { %>
+        <li class="transaction-item">
+            <a href="<%=transaction.href%>">
+
+                <img class="large-icon" src="/img/<%=transaction.icon%>.svg">
+                <% if (transaction.smallIcon) { %>
+                    <img class="small-icon" src="/img/<%=transaction.smallIcon%>.svg">
+                <% } %>
+
+                <div class="transaction-item-text">
+                    <div class="transaction-item-date"><%=transaction.dateText%></div>
+                    <div class="transaction-item-type"><%=transaction.typeText%></div>
+                    <div class="transaction-item-title"><%=transaction.title%></div>
+                </div>
+
+                <div class="transaction-item-total <%=transaction.total > 0 ? 'plus' : transaction.total < 0 ? 'minus' : ''%>">
+                    <%=(transaction.total > 0 ? '+' : '') + transaction.total%>
+                </div>
+                <div class="clear"></div>
+
+            </a>
+        </li>
+    <% }); %>
+    </ul>
+</body>
